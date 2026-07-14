@@ -21,6 +21,38 @@ function actionLabel(action) {
   }[action] || "Act";
 }
 
+/** Emergency playbook steps shown under every critical assessment (PRD F12). */
+function playbookSteps(action) {
+  return (
+    {
+      block_permit: [
+        ["Abort", "Stop the work front and withdraw crews from the hot zone"],
+        ["Notify", "Inform shift supervisor / control room of the compound hold"],
+        ["Preserve", "Keep the PTW blocked and freeze the evidence pack"],
+      ],
+      escalate: [
+        ["Abort", "Pause SIMOPS until the elevated atmosphere clears"],
+        ["Notify", "Escalate to area owner and HSE on-call"],
+        ["Preserve", "Hold permits in request and retain sensor traces"],
+      ],
+      evacuate: [
+        ["Abort", "Withdraw all personnel from the affected zones"],
+        ["Notify", "Activate emergency notification / muster"],
+        ["Preserve", "Secure valves/power as SOP; do not reset permits"],
+      ],
+      alert: [
+        ["Watch", "Increase monitoring frequency on the lit agents"],
+        ["Notify", "Brief the permit issuer before approving work"],
+        ["Preserve", "Keep the assessment trail attached to the PTW"],
+      ],
+    }[action] || [
+      ["Abort", "Hold work until compound risk clears"],
+      ["Notify", "Alert control room"],
+      ["Preserve", "Keep evidence attached to the decision"],
+    ]
+  );
+}
+
 function zoneTitle(id) {
   return (id || "")
     .replace(/^zone_/, "")
@@ -31,6 +63,194 @@ function zoneTitle(id) {
 function permitLabel(p) {
   const kind = (p.permit_type || "permit").replaceAll("_", " ");
   return `${kind} · ${zoneTitle(p.zone_id)} · ${p.status}`;
+}
+
+function scorePct(a) {
+  if (a?.model_score != null) return Math.round(a.model_score * 100);
+  if (a?.score != null) return Math.round(a.score * 100);
+  return null;
+}
+
+function RaceTrack({ fusion, baseline, incident }) {
+  const end = Math.max(incident || 1, fusion || 0, baseline || 0, 1);
+  const pct = (t) => (t == null ? null : Math.min(100, Math.max(0, (t / end) * 100)));
+  const f = pct(fusion);
+  const b = pct(baseline);
+  const i = pct(incident);
+  return (
+    <div className="race-track">
+      <div className="race-track-bar">
+        {f != null && <i className="mark fusion" style={{ left: `${f}%` }} title={`Fusion @${fusion}s`} />}
+        {b != null && <i className="mark baseline" style={{ left: `${b}%` }} title={`Baseline @${baseline}s`} />}
+        {i != null && <i className="mark incident" style={{ left: `${i}%` }} title={`Incident @${incident}s`} />}
+        <span className="race-fill" style={{ width: `${f ?? 0}%` }} />
+      </div>
+      <div className="race-track-keys">
+        <span className="k-f">Fusion {fusion != null ? `@${fusion}s` : "—"}</span>
+        <span className="k-b">Baseline {baseline != null ? `@${baseline}s` : "silent"}</span>
+        <span className="k-i">Incident {incident != null ? `@${incident}s` : "—"}</span>
+      </div>
+    </div>
+  );
+}
+
+function ScrubRail({
+  duration,
+  tSec,
+  fusion,
+  baseline,
+  incident,
+  active,
+  onScrub,
+}) {
+  const dur = Math.max(duration || 1, 1);
+  const pct = (t) => (t == null ? null : Math.min(100, Math.max(0, (t / dur) * 100)));
+  return (
+    <div className={`scrub-rail ${active ? "live" : ""}`}>
+      <div className="scrub-meta">
+        <span>Timeline</span>
+        <b>
+          T+{tSec}s / {dur}s
+        </b>
+      </div>
+      <div className="scrub-track">
+        <input
+          type="range"
+          min={0}
+          max={dur}
+          step={10}
+          value={Math.min(tSec, dur)}
+          disabled={!active}
+          aria-label="Scrub scenario time"
+          onChange={(e) => onScrub(Number(e.target.value))}
+        />
+        <div className="scrub-marks" aria-hidden>
+          {pct(fusion) != null && <i className="m-f" style={{ left: `${pct(fusion)}%` }} />}
+          {pct(baseline) != null && <i className="m-b" style={{ left: `${pct(baseline)}%` }} />}
+          {pct(incident) != null && <i className="m-i" style={{ left: `${pct(incident)}%` }} />}
+        </div>
+      </div>
+      <div className="scrub-keys">
+        <span className="k-f">F {fusion != null ? `@${fusion}` : "—"}</span>
+        <span className="k-b">B {baseline != null ? `@${baseline}` : "—"}</span>
+        <span className="k-i">I {incident != null ? `@${incident}` : "—"}</span>
+      </div>
+    </div>
+  );
+}
+
+function AssessmentCard({ a, metrics, deciding, decision, onDecide }) {
+  const cite = a.citations?.[0];
+  const pct = scorePct(a);
+  const done = decision?.assessment_id === a.id;
+  return (
+    <article className={`ticket ${a.severity}`}>
+      <div className="ticket-banner">
+        <div>
+          <span className="sev">{a.severity}</span>
+          <h2>{a.title}</h2>
+          <p className="where">
+            {zoneTitle(a.zone_id)} · T+{a.t_sec}s
+            {a.rule_forced ? " · rule lock" : " · model elevated"}
+          </p>
+        </div>
+        <div className="gauge" aria-label={`Score ${pct ?? "n/a"}`}>
+          <b>{pct != null ? `${pct}` : "—"}</b>
+          <small>%</small>
+        </div>
+      </div>
+
+      <RaceTrack
+        fusion={a.t_sec ?? metrics?.fusion_first_critical_sec}
+        baseline={metrics?.baseline_first_fire_sec}
+        incident={metrics?.incident_at_sec}
+      />
+
+      <div className="agent-grid">
+        {(a.agents || []).map((ag) => (
+          <div key={ag.agent} className={`agent-cell ${ag.facts?.length ? "lit" : ""}`}>
+            <strong>{ag.agent}</strong>
+            <span>{ag.facts?.length ? `${ag.facts.length} fact${ag.facts.length > 1 ? "s" : ""}` : "quiet"}</span>
+            {ag.facts?.[0] && <em>{ag.facts[0].label}</em>}
+          </div>
+        ))}
+      </div>
+
+      {a.ai?.summary && (
+        <p className="brief">
+          <span>{a.ai.provider}</span>
+          {a.ai.summary}
+        </p>
+      )}
+
+      <div className="factor-block">
+        <h3>Why this fired</h3>
+        <ol>
+          {(a.factors || []).slice(0, 4).map((f, i) => (
+            <li key={f.code}>
+              <span>{i + 1}</span>
+              {f.label}
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {a.related_permit_ids?.length > 0 && (
+        <div className="ptw-block">
+          <h3>Related permits</h3>
+          <div className="ptw-ids">
+            {a.related_permit_ids.map((id) => (
+              <code key={id}>{id}</code>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="playbook">
+        <h3>Emergency playbook</h3>
+        <ol>
+          {playbookSteps(a.recommended_action).map(([verb, detail]) => (
+            <li key={verb}>
+              <strong>{verb}</strong>
+              <span>{detail}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {cite && (
+        <div className="evidence">
+          <div className="evidence-head">
+            <h3>Evidence pack</h3>
+            <span>{cite.section || "guidance"}</span>
+          </div>
+          <p className="src">{cite.source}</p>
+          {cite.excerpt && <p className="excerpt">{cite.excerpt}</p>}
+          {cite.next_step && (
+            <p className="now">
+              <span>Now</span> {cite.next_step}
+            </p>
+          )}
+        </div>
+      )}
+
+      {a.id && (
+        <div className="ticket-act">
+          <p>
+            Recommended: <b>{actionLabel(a.recommended_action)}</b>
+          </p>
+          <button
+            type="button"
+            className="btn-act"
+            disabled={deciding || done}
+            onClick={() => onDecide(a)}
+          >
+            {done ? "Executed" : actionLabel(a.recommended_action)}
+          </button>
+        </div>
+      )}
+    </article>
+  );
 }
 
 function fmt(v, unit = "s") {
@@ -85,6 +305,8 @@ export default function App() {
     critical && baselineFire && baselineFire.t_sec > critical.t_sec
       ? baselineFire.t_sec - critical.t_sec
       : metrics?.lead_time_sec;
+  const activeScenario = scenarios.find((s) => s.id === scenarioId);
+  const durationSec = activeScenario?.duration_sec ?? 600;
 
   function onPlay() {
     setError(null);
@@ -142,18 +364,22 @@ export default function App() {
     ws.send(JSON.stringify({ type: "control", command: paused ? "resume" : "pause" }));
   }
 
-  function onSkipAhead() {
+  function scrubTo(atSec) {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    const sc = scenarios.find((s) => s.id === scenarioId);
-    const incident = sc?.incident_at_sec ?? 480;
     ws.send(
       JSON.stringify({
         type: "control",
         command: "scrub",
-        at_sec: Math.max(0, incident - 200),
+        at_sec: Math.max(0, Number(atSec) || 0),
       }),
     );
+  }
+
+  function onSkipAhead() {
+    const sc = scenarios.find((s) => s.id === scenarioId);
+    const incident = sc?.incident_at_sec ?? 480;
+    scrubTo(Math.max(0, incident - 200));
   }
 
   async function onAsk(e) {
@@ -294,13 +520,28 @@ export default function App() {
             <em>fusion advantage</em>
           </article>
           <article>
-            <small>Active PTW</small>
-            <b>{livePermits.length}</b>
-            <em>{livePermits[0] ? permitLabel(livePermits[0]) : "none live"}</em>
+            <small>{metrics ? "Baseline miss" : "Active PTW"}</small>
+            <b>
+              {metrics
+                ? metrics.false_negative_baseline
+                  ? "FN"
+                  : "caught"
+                : livePermits.length}
+            </b>
+            <em>
+              {metrics
+                ? metrics.false_negative_fusion
+                  ? "fusion miss"
+                  : "fusion catch"
+                : livePermits[0]
+                  ? permitLabel(livePermits[0])
+                  : "none live"}
+            </em>
           </article>
         </section>
 
         <section className="stage">
+          <div className="twin-col">
           <div className="twin-frame">
             <div className="twin-aura" aria-hidden />
             {plant ? (
@@ -313,7 +554,6 @@ export default function App() {
             ) : (
               <div className="loading">Building twin…</div>
             )}
-
             <div className="overlay-top">
               {livePermits.map((p) => (
                 <span key={p.id} className={`chip ptw ${p.permit_type || ""}`}>
@@ -323,7 +563,7 @@ export default function App() {
             </div>
 
             {critical && (
-              <div className="hot-card">
+              <div className="hot-card corner">
                 <span>Hot zone</span>
                 <strong>{zoneTitle(critical.zone_id)}</strong>
                 <em>{critical.severity}</em>
@@ -359,6 +599,17 @@ export default function App() {
             </div>
           </div>
 
+          <ScrubRail
+            duration={durationSec}
+            tSec={tSec}
+            fusion={metrics?.fusion_first_critical_sec ?? critical?.t_sec}
+            baseline={metrics?.baseline_first_fire_sec ?? baselineFire?.t_sec}
+            incident={metrics?.incident_at_sec ?? activeScenario?.incident_at_sec}
+            active={status === "running"}
+            onScrub={scrubTo}
+          />
+          </div>
+
           <aside className={`ops ${nav}`}>
             <header className="ops-head">
               <div>
@@ -378,93 +629,65 @@ export default function App() {
             {(nav === "twin" || nav === "risk") && (
               <div className="ops-body">
                 {metrics && (
-                  <p className="proof">
-                    Fusion <b>{fmt(metrics.fusion_first_critical_sec)}</b>
-                    {" · "}
-                    baseline{" "}
-                    {metrics.baseline_first_fire_sec == null
-                      ? "missed"
-                      : fmt(metrics.baseline_first_fire_sec)}
-                    {" · "}
-                    <span>+{metrics.lead_time_sec ?? "—"}s lead</span>
-                  </p>
+                  <div className="proof-board">
+                    <div>
+                      <small>Fusion</small>
+                      <b>{fmt(metrics.fusion_first_critical_sec)}</b>
+                    </div>
+                    <div>
+                      <small>Baseline</small>
+                      <b>
+                        {metrics.baseline_first_fire_sec == null
+                          ? "miss"
+                          : fmt(metrics.baseline_first_fire_sec)}
+                      </b>
+                    </div>
+                    <div className="hi">
+                      <small>Lead</small>
+                      <b>+{metrics.lead_time_sec ?? "—"}s</b>
+                    </div>
+                  </div>
                 )}
 
                 {assessments.length === 0 && !decision && (
-                  <p className="empty">
-                    Run a scenario. The twin lights zones and agents; decide from here.
-                  </p>
+                  <div className="empty-card">
+                    <h3>No active compound risk</h3>
+                    <ol>
+                      <li>Pick a scenario in the top bar</li>
+                      <li>
+                        Hit <b>Run scenario</b> (or Skip ahead)
+                      </li>
+                      <li>Watch agents light the twin, then decide here</li>
+                    </ol>
+                  </div>
                 )}
 
-                {assessments.map((a) => {
-                  const cite = a.citations?.[0];
-                  return (
-                    <article key={a.id || a.title} className={`ticket ${a.severity}`}>
-                      <div className="ticket-top">
-                        <h2>{a.title}</h2>
-                        <span>
-                          {a.model_score != null ? `${(a.model_score * 100).toFixed(0)}%` : "—"}
-                        </span>
-                      </div>
-                      {a.agents?.length > 0 && (
-                        <div className="agents">
-                          {a.agents.map((ag) => (
-                            <span
-                              key={ag.agent}
-                              className={ag.facts?.length ? "lit" : ""}
-                              title={(ag.facts || []).map((f) => f.label).join(" · ") || "quiet"}
-                            >
-                              {ag.agent}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {a.ai?.summary && (
-                        <p className="brief">
-                          <span>{a.ai.provider}</span>
-                          {a.ai.summary}
-                        </p>
-                      )}
-                      <ul>
-                        {a.factors?.slice(0, 3).map((f) => (
-                          <li key={f.code}>{f.label}</li>
-                        ))}
-                      </ul>
-                      {a.related_permit_ids?.length > 0 && (
-                        <p className="meta">PTW {a.related_permit_ids.join(", ")}</p>
-                      )}
-                      {cite && (
-                        <div className="evidence">
-                          <p className="src">{cite.source}</p>
-                          {cite.excerpt && <p>{cite.excerpt}</p>}
-                          {cite.next_step && (
-                            <p className="now">
-                              <span>Now</span> {cite.next_step}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      {a.id && (
-                        <button
-                          type="button"
-                          className="btn-act"
-                          disabled={deciding || decision?.assessment_id === a.id}
-                          onClick={() => onDecide(a)}
-                        >
-                          {decision?.assessment_id === a.id
-                            ? "Executed"
-                            : actionLabel(a.recommended_action)}
-                        </button>
-                      )}
-                    </article>
-                  );
-                })}
+                {assessments.map((a) => (
+                  <AssessmentCard
+                    key={a.id || a.title}
+                    a={a}
+                    metrics={metrics}
+                    deciding={deciding}
+                    decision={decision}
+                    onDecide={onDecide}
+                  />
+                ))}
 
                 {decision && (
-                  <article className="ticket ok">
-                    <div className="ticket-top">
-                      <h2>{decision.message}</h2>
-                      <span>OK</span>
+                  <article className="ticket ok done-card">
+                    <div className="ticket-banner">
+                      <div>
+                        <span className="sev ok">done</span>
+                        <h2>{decision.message}</h2>
+                        {decision.blocked_permit_ids?.length > 0 && (
+                          <p className="where">
+                            Blocked {decision.blocked_permit_ids.join(", ")}
+                          </p>
+                        )}
+                      </div>
+                      <div className="gauge ok">
+                        <b>✓</b>
+                      </div>
                     </div>
                   </article>
                 )}

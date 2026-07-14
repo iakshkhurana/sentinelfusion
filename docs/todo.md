@@ -26,6 +26,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] WebSocket twin ticks  
 - [x] Single-sensor baseline alerter  
 - [x] Scenario pause / resume / scrub over WebSocket  
+- [x] Twin timeline scrub rail (fusion / baseline / incident marks)  
 
 ## Phase 2 — ML + fusion (core uniqueness)
 
@@ -39,6 +40,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] Sensor / Permit / Ops agents as real modules (`apps/api/agents/`)  
 - [x] Fusion coordinator (clean pipeline; LangGraph later if needed)  
 - [x] Action playbooks: alert · block permit · escalate · evidence  
+- [x] Emergency playbook UI (abort / notify / preserve) on assessments  
 - [x] Audit log UI for `/api/v1/decisions`  
 
 ## Phase 4 — Frontend product
