@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import Iterator
 from typing import Any
 
@@ -89,6 +90,7 @@ def _assess_compound(
         touch = {p["zone_id"], *(p.get("adjacent_zone_ids") or [])}
         if p.get("permit_type") == "hot_work" and gas_zones & touch:
             return {
+                "id": str(uuid.uuid4()),
                 "t_sec": t,
                 "severity": "critical",
                 "title": "Hot work adjacent to elevated gas",
@@ -108,6 +110,7 @@ def _assess_compound(
             pressure_zones & touch or toxic_zones & touch or p["zone_id"] in toxic_zones
         ):
             return {
+                "id": str(uuid.uuid4()),
                 "t_sec": t,
                 "severity": "critical",
                 "title": "Confined space under abnormal atmosphere",
@@ -133,6 +136,7 @@ def _assess_compound(
                 path_zones.update({p["zone_id"], *(p.get("adjacent_zone_ids") or [])})
         if gas_zones & path_zones:
             return {
+                "id": str(uuid.uuid4()),
                 "t_sec": t,
                 "severity": "critical",
                 "title": "Maintenance on gas path with rising detectors",

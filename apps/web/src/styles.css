@@ -100,6 +100,11 @@ button.primary {
   border-color: transparent;
 }
 
+button.danger {
+  background: linear-gradient(135deg, #8b2e28, #c4473d);
+  border-color: transparent;
+}
+
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -140,12 +145,20 @@ svg.twin {
   border-color: rgba(255, 90, 79, 0.55);
 }
 
+.card.ok {
+  border-color: rgba(110, 231, 183, 0.45);
+}
+
 .sev {
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--crit);
+}
+
+.sev.ok-sev {
+  color: var(--accent);
 }
 
 .muted {

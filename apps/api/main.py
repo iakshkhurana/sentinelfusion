@@ -4,15 +4,26 @@ from pathlib import Path
 
 import yaml
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
 
+
+from decisions import decide
 from engine import iter_replay, replay
 
 app = FastAPI(title="SentinelFusion API", version="0.1.0")
 
 # ponytail: resolve scenarios from monorepo layout; swap for env var when packaging
 _SCENARIOS = Path(__file__).resolve().parents[2] / "packages" / "scenarios"
-# demo pacing between live ticks
 _TICK_PAUSE_SEC = 0.45
+
+# last assessments from sync/WS runs — enough for demo decisions
+_assessments: dict[str, dict] = {}
+_decisions: list[dict] = []
+
+
+class DecideBody(BaseModel):
+    confirm: bool = False
+    notes: str | None = None
 
 
 def _load_yaml(path: Path) -> dict:
@@ -38,6 +49,12 @@ def _scenario_or_404(scenario_id: str) -> dict:
     if not path.is_file():
         raise HTTPException(status_code=404, detail="scenario_not_found")
     return _load_yaml(path)
+
+
+def _remember(assessments: list[dict]) -> None:
+    for a in assessments:
+        if a.get("id"):
+            _assessments[a["id"]] = a
 
 
 @app.get("/api/v1/health")
@@ -71,12 +88,35 @@ def get_scenario(scenario_id: str) -> dict:
 def run_scenario(scenario_id: str) -> dict:
     data = _scenario_or_404(scenario_id)
     result = replay(data)
+    _remember(result["assessments"])
     return {
         "scenario_id": scenario_id,
         "status": "completed",
         "assessments": result["assessments"],
         "metrics": result["metrics"],
     }
+
+
+@app.post("/api/v1/assessments/{assessment_id}/decide")
+def decide_assessment(assessment_id: str, body: DecideBody = DecideBody()) -> dict:
+    assessment = _assessments.get(assessment_id)
+    if not assessment:
+        raise HTTPException(status_code=404, detail="assessment_not_found")
+    try:
+        decision = decide(assessment, confirm=body.confirm, notes=body.notes)
+    except ValueError as exc:
+        code = str(exc)
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": code, "message": code}},
+        ) from exc
+    _decisions.append(decision)
+    return decision
+
+
+@app.get("/api/v1/decisions")
+def list_decisions() -> list[dict]:
+    return list(reversed(_decisions))
 
 
 @app.websocket("/api/v1/ws/scenarios/{scenario_id}")
@@ -89,6 +129,10 @@ async def ws_scenario(scenario_id: str, websocket: WebSocket) -> None:
     data = _load_yaml(path)
     try:
         for msg in iter_replay(data):
+            if msg["type"] == "assessment.upsert":
+                _remember([msg["payload"]])
+            elif msg["type"] == "run.done":
+                _remember(msg["payload"].get("assessments") or [])
             await websocket.send_json(msg)
             if msg["type"] != "run.done":
                 await asyncio.sleep(_TICK_PAUSE_SEC)

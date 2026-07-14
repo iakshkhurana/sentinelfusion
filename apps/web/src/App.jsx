@@ -11,6 +11,15 @@ function wsUrl(scenarioId) {
   return `${proto}://${window.location.host}/api/v1/ws/scenarios/${scenarioId}`;
 }
 
+function actionLabel(action) {
+  return {
+    block_permit: "Block permit",
+    escalate: "Escalate",
+    evacuate: "Confirm evacuate",
+    alert: "Acknowledge",
+  }[action] || "Decide";
+}
+
 function zoneFill(zoneId, criticalZoneId, zonesTint, gasZones) {
   if (zoneId === criticalZoneId) return "rgba(255, 90, 79, 0.72)";
   const level = zonesTint[zoneId] ?? 0;
@@ -30,6 +39,8 @@ export default function App() {
   const [zonesTint, setZonesTint] = useState({});
   const [tSec, setTSec] = useState(0);
   const [status, setStatus] = useState("idle");
+  const [decision, setDecision] = useState(null);
+  const [deciding, setDeciding] = useState(false);
   const [error, setError] = useState(null);
   const wsRef = useRef(null);
 
@@ -54,6 +65,7 @@ export default function App() {
     setError(null);
     setAssessments([]);
     setMetrics(null);
+    setDecision(null);
     setZonesTint({});
     setTSec(0);
     setStatus("running");
@@ -84,6 +96,24 @@ export default function App() {
     ws.onclose = () => {
       setStatus((s) => (s === "running" ? "completed" : s));
     };
+  }
+
+  async function onDecide(assessment) {
+    setDeciding(true);
+    setError(null);
+    try {
+      const needsConfirm = assessment.recommended_action === "evacuate";
+      const out = await getJson(`/api/v1/assessments/${assessment.id}/decide`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: needsConfirm ? true : false }),
+      });
+      setDecision(out);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDeciding(false);
+    }
   }
 
   return (
@@ -175,7 +205,7 @@ export default function App() {
             <p className="muted">Play a scenario — watch risk form as ticks stream in.</p>
           )}
           {assessments.map((a, i) => (
-            <article key={`${a.title}-${a.t_sec}-${i}`} className={`card ${a.severity}`}>
+            <article key={`${a.id || a.title}-${i}`} className={`card ${a.severity}`}>
               <div className="sev">{a.severity}</div>
               <strong>{a.title}</strong>
               <div className="meta">
@@ -188,8 +218,37 @@ export default function App() {
                   <li key={f.code}>{f.label}</li>
                 ))}
               </ul>
+              {a.id && (
+                <div className="row" style={{ marginTop: "0.65rem", marginBottom: 0 }}>
+                  <button
+                    className="danger"
+                    type="button"
+                    disabled={deciding || decision?.assessment_id === a.id}
+                    onClick={() => onDecide(a)}
+                  >
+                    {decision?.assessment_id === a.id
+                      ? "Decision executed"
+                      : actionLabel(a.recommended_action)}
+                  </button>
+                </div>
+              )}
             </article>
           ))}
+
+          <h2 style={{ marginTop: "1.25rem", fontSize: "1rem" }}>Decision</h2>
+          {!decision && <p className="muted">Execute the recommended action from an assessment.</p>}
+          {decision && (
+            <article className="card ok">
+              <div className="sev ok-sev">{decision.state}</div>
+              <strong>{decision.message}</strong>
+              <div className="meta">
+                <span>{decision.action.replaceAll("_", " ")}</span>
+                {decision.blocked_permit_ids?.length > 0 && (
+                  <span>permits: {decision.blocked_permit_ids.join(", ")}</span>
+                )}
+              </div>
+            </article>
+          )}
         </aside>
       </div>
     </div>
