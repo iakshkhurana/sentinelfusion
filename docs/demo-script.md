@@ -17,6 +17,10 @@ Record against `docker compose up --build` → http://localhost:5173
 
 - Fusion critical **@300s**, baseline **@420s**, lead **+180s**, incident ground truth **480s**
 
+## Alternate close (optional)
+
+Select **Multi-permit SIMOPS at shift handover** — fusion @210s blocks **both** PTWs (+210s lead).
+
 ## Fail-safes
 
 - If WS stalls: `POST /api/v1/scenarios/hot_work_gas_adjacent/run` still returns metrics + assessments.

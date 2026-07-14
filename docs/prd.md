@@ -62,7 +62,7 @@ App launches on **Digital Twin · Demo Mode** with Assessment panel + Decision f
 1. Hot work adjacent to elevated flammable/toxic gas  
 2. Confined-space entry under abnormal process conditions  
 3. Maintenance on gas-handling path while detectors trend up  
-4. (Stretch) Multi-permit SIMOPS at shift handover  
+4. ~~(Stretch) Multi-permit SIMOPS at shift handover~~ **shipped** (`simops_shift_handover`)  
 
 ## UX principles
 

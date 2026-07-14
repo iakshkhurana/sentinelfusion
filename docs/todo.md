@@ -9,6 +9,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] Plant pack + zone adjacency (steel_pack_v1)  
 - [x] Three.js plant twin (6+ zones)  
 - [x] ≥3 YAML scenarios with ground-truth `incident_at_sec`  
+- [x] Stretch: multi-permit SIMOPS at shift handover (`simops_shift_handover`)  
 - [x] Pytest scenario eval harness (all packaged YAMLs) + health/run smoke  
 - [ ] Vitest + WS test helper (web)  
 

@@ -24,6 +24,20 @@ def evaluate(
                 {"code": "maint_on_gas_path", "label": "Maintenance on gas-handling asset"}
             )
             break
+    active = [
+        p
+        for p in permits.values()
+        if p.get("status") in {"requested", "active"}
+    ]
+    types = {p.get("permit_type") for p in active}
+    if "hot_work" in types and "confined_space" in types:
+        facts.append(
+            {
+                "code": "simops_conflict",
+                "label": "Concurrent hot-work and confined-space permits",
+            }
+        )
+
     return {
         "agent": "ops",
         "facts": facts,

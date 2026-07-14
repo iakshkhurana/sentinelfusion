@@ -148,6 +148,7 @@ python scripts/eval_report.py
 | `hot_work_gas_adjacent` | @300s | @420s | +180s | @480s |
 | `confined_space_abnormal` | @240s | @390s | +180s | @420s |
 | `maint_gas_path_trend` | @270s | @420s | +180s | @450s |
+| `simops_shift_handover` | @210s | @330s | +210s | @420s |
 
 Recompute anytime with `python scripts/eval_report.py`.
 

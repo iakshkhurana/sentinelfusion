@@ -1,0 +1,74 @@
+id: simops_shift_handover
+title: Multi-permit SIMOPS at shift handover
+description: >
+  Night-to-day handover leaves a confined-space entry live in the by-product
+  plant while a hot-work permit goes active in the adjacent maintenance bay —
+  with CO rising in coke oven. Single sensors stay quiet; concurrent PTWs do not.
+plant_id: steel_pack_v1
+duration_sec: 540
+incident_at_sec: 420
+events:
+  - t: 0
+    type: sensor
+    tag_id: tag_gas_co_01
+    zone_id: zone_coke_oven
+    metric: co_ppm
+    value: 22
+    unit: ppm
+  - t: 60
+    type: permit
+    id: ptw_cs_handover
+    permit_type: confined_space
+    status: active
+    zone_id: zone_byproduct
+    adjacent_zone_ids: [zone_coke_oven, zone_gas_holder]
+    asset_id: asset_confined_pit_b
+    requester: night_ops
+  - t: 120
+    type: sensor
+    tag_id: tag_gas_co_01
+    zone_id: zone_coke_oven
+    metric: co_ppm
+    value: 48
+    unit: ppm
+  - t: 150
+    type: permit
+    id: ptw_hot_shift_07
+    permit_type: hot_work
+    status: requested
+    zone_id: zone_maintenance_bay
+    adjacent_zone_ids: [zone_coke_oven]
+    requester: day_contractor
+  - t: 210
+    type: sensor
+    tag_id: tag_gas_co_01
+    zone_id: zone_coke_oven
+    metric: co_ppm
+    value: 68
+    unit: ppm
+  - t: 210
+    type: permit
+    id: ptw_hot_shift_07
+    permit_type: hot_work
+    status: active
+    zone_id: zone_maintenance_bay
+    adjacent_zone_ids: [zone_coke_oven]
+    requester: day_contractor
+  - t: 210
+    type: cv
+    camera_id: cam_handover_01
+    zone_id: zone_maintenance_bay
+    signal: concurrent_work_fronts
+    confidence: 0.81
+  - t: 330
+    type: sensor
+    tag_id: tag_gas_co_01
+    zone_id: zone_coke_oven
+    metric: co_ppm
+    value: 112
+    unit: ppm
+  - t: 420
+    type: incident
+    code: simops_ignition_atmosphere
+    zone_id: zone_coke_oven
+    note: Concurrent hot work + confined entry during rising CO at handover

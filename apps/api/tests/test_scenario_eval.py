@@ -44,6 +44,11 @@ def test_fusion_beats_baseline_before_incident(path: Path) -> None:
     if path.stem == "hot_work_gas_adjacent":
         vision = next(a for a in crit["agents"] if a["agent"] == "vision")
         assert vision["facts"], "hot_work scenario should include CV corroboration"
+    if path.stem == "simops_shift_handover":
+        assert crit["title"].startswith("Multi-permit SIMOPS")
+        assert len(crit.get("related_permit_ids") or []) >= 2
+        codes = {f["code"] for f in crit.get("factors") or []}
+        assert "simops_conflict" in codes
 
 
 def test_knowledge_corpus_loaded() -> None:

@@ -6,6 +6,7 @@ _LABELS = {
     "hotspot_adjacent": "Camera sees thermal/spark activity near gas interface",
     "zone_intrusion": "Unauthorized personnel in restricted zone",
     "ppe_missing": "PPE non-compliance detected at workface",
+    "concurrent_work_fronts": "Camera sees two active work fronts overlapping hazards",
 }
 
 

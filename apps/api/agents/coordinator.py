@@ -20,13 +20,40 @@ def _rule_from_agents(
     ops_r: dict,
 ) -> dict | None:
     gas_zones = sensor_r["gas_zones"]
-    if feats["hot_work_adjacent_gas"] >= 1 and permit_r.get("hot_work"):
-        p = permit_r["hot_work"]
+    hot = permit_r.get("hot_work")
+    confined = permit_r.get("confined")
+    # Multi-permit SIMOPS before single-pattern rules so both PTWs are blocked
+    if (
+        hot
+        and confined
+        and feats["active_permit_count"] >= 2
+        and (
+            feats["hot_work_adjacent_gas"] >= 1
+            or feats["confined_abnormal"] >= 1
+        )
+    ):
+        return {
+            "title": "Multi-permit SIMOPS at shift handover",
+            "zone_id": hot["zone_id"],
+            "recommended_action": "block_permit",
+            "related_permit_ids": [hot["id"], confined["id"]],
+            "factors": [
+                {
+                    "code": "simops_conflict",
+                    "label": "Concurrent hot-work and confined-space permits",
+                },
+                {"code": "gas_elevated", "label": "CO elevated above compound threshold"},
+                {"code": "hot_work_adjacent", "label": "Hot-work permit touches gas zone"},
+            ],
+            "gas_zone_ids": gas_zones,
+            "rule_score": 0.97,
+        }
+    if feats["hot_work_adjacent_gas"] >= 1 and hot:
         return {
             "title": "Hot work adjacent to elevated gas",
-            "zone_id": p["zone_id"],
+            "zone_id": hot["zone_id"],
             "recommended_action": "block_permit",
-            "related_permit_ids": [p["id"]],
+            "related_permit_ids": [hot["id"]],
             "factors": [
                 {"code": "gas_elevated", "label": "CO elevated above compound threshold"},
                 {"code": "hot_work_adjacent", "label": "Hot-work permit touches gas zone"},
