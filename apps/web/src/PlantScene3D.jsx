@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import gsap from "gsap";
 
 const BASE = {
@@ -10,6 +11,10 @@ const BASE = {
   medium: 0x343c46,
   low: 0x2c333c,
 };
+
+function shortLabel(name) {
+  return name.replace(/\s*\/.*$/, "").split(/\s+/).slice(0, 2).join(" ");
+}
 
 /** Formal isometric plant twin — readable zones, no room fluff. */
 export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
@@ -38,6 +43,11 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
     el.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(w, h);
+    labelRenderer.domElement.className = "label-layer";
+    el.appendChild(labelRenderer.domElement);
 
     scene.add(new THREE.AmbientLight(0x8a9ab0, 0.55));
     const key = new THREE.DirectionalLight(0xf2f6ff, 1.15);
@@ -140,11 +150,19 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
       marker.position.set(body.position.x, bh + 0.28, body.position.z);
       root.add(marker);
 
+      const tag = document.createElement("div");
+      tag.className = "zone-label";
+      tag.textContent = shortLabel(zone.name);
+      const label = new CSS2DObject(tag);
+      label.position.set(body.position.x, bh + 0.55, body.position.z);
+      root.add(label);
+
       zoneMeshes.set(zone.id, {
         body,
         mat,
         edge,
         marker,
+        labelEl: tag,
         bh,
         baseColor: BASE[zone.hazard_class] || BASE.medium,
       });
@@ -190,6 +208,7 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
       if (r) r.rotation.z = t * 0.08;
       controls.update();
       renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
       raf = requestAnimationFrame(animate);
     };
     animate();
@@ -200,6 +219,7 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
       camera.aspect = nw / nh;
       camera.updateProjectionMatrix();
       renderer.setSize(nw, nh);
+      labelRenderer.setSize(nw, nh);
     };
     window.addEventListener("resize", onResize);
 
@@ -208,6 +228,8 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
         for (const [id, z] of zoneMeshes) {
           const level = tint?.[id] ?? 0;
           const critical = id === critId;
+          z.labelEl.classList.toggle("hot", critical);
+          z.labelEl.classList.toggle("warn", !critical && level > 0.12);
           if (critical) {
             z.mat.color.setHex(0x5a3030);
             z.mat.emissive.set("#ff5d4a");
@@ -245,6 +267,7 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
       controls.dispose();
       renderer.dispose();
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
+      if (el.contains(labelRenderer.domElement)) el.removeChild(labelRenderer.domElement);
       apiRef.current = null;
     };
   }, [plant]);

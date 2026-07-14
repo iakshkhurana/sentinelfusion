@@ -45,7 +45,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 ## Phase 4 — Frontend product
 
-- [ ] Plant heatmap + permit overlays + adjacency cues  
+- [x] Plant twin zone labels + risk tint (permit overlays later)  
 - [ ] Risk rail + factor evidence drawer  
 - [x] Baseline vs fusion comparison strip (proof line + metrics)  
 - [ ] Demo mode polish (brand, motion, empty/loading states)  
@@ -66,10 +66,11 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 ## Phase 7 — Demo package
 
-- [ ] Architecture diagram (matches running system)  
-- [ ] Deck: problem → unique wedge → demo → metrics → scale  
-- [ ] 90–120s demo video  
-- [ ] README one-command path  
+- [x] Architecture diagram (matches running system)  
+- [x] 90–120s demo script (`docs/demo-script.md`)  
+- [ ] Deck slides (problem → wedge → demo → metrics → scale)  
+- [ ] Recorded 90–120s demo video  
+- [x] README one-command path  
 
 ## Stretch (if crushing it)
 

@@ -4,7 +4,28 @@ Watchable spine: **YAML twin → context → derived facts → assessment → de
 
 Full stack vibe: [`docs/stack.md`](stack.md)
 
-## System overview
+## Runtime (what runs today)
+
+```mermaid
+flowchart LR
+  YAML[packages/scenarios YAML] --> Engine[apps/api engine replay]
+  Engine --> Baseline[Single-sensor baseline]
+  Engine --> Fusion[Rules + ML compound scorer]
+  Fusion --> Cite[Citation attach]
+  Engine -->|WebSocket ticks| Twin[React Three.js twin]
+  Fusion -->|assessments + metrics| Panel[Assessment panel]
+  Panel -->|decide| SM[Decision actions]
+  Cite --> Panel
+```
+
+| Process | Port | Role |
+|---------|------|------|
+| `api` (uvicorn) | 8000 | Scenarios, replay, WS, decide, model health |
+| `web` (nginx) | 5173→80 | Twin UI; proxies `/api` + WS to `api` |
+
+One-command: `docker compose up --build`. Narration beats: [`docs/demo-script.md`](demo-script.md).
+
+## System overview (target spine)
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -46,7 +67,7 @@ Full stack vibe: [`docs/stack.md`](stack.md)
                 ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  React Digital Twin (Demo Mode)                              │
-│  plant SVG · Assessment panel · Decision flow                │
+│  Three.js plant · Assessment panel · Decision flow           │
 └─────────────────────────────────────────────────────────────┘
 ```
 

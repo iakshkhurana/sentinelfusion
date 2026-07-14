@@ -43,13 +43,47 @@ body,
   background: radial-gradient(ellipse at 40% 35%, #152030 0%, var(--bg) 65%);
 }
 
-.scene3d,
-.scene3d canvas {
+.scene3d {
   position: absolute;
   inset: 0;
+}
+
+.scene3d canvas {
+  display: block;
   width: 100% !important;
   height: 100% !important;
-  display: block;
+}
+
+.label-layer {
+  position: absolute !important;
+  inset: 0;
+  pointer-events: none !important;
+  overflow: hidden;
+}
+
+.zone-label {
+  padding: 0.18rem 0.4rem;
+  border-radius: 0.3rem;
+  background: rgba(12, 16, 22, 0.82);
+  border: 1px solid rgba(180, 200, 220, 0.18);
+  color: #c8d4e0;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  transform: translateY(-4px);
+}
+
+.zone-label.warn {
+  border-color: rgba(224, 169, 58, 0.45);
+  color: #f0d08a;
+}
+
+.zone-label.hot {
+  border-color: rgba(227, 90, 72, 0.55);
+  color: #ffb0a6;
+  background: rgba(40, 14, 12, 0.9);
+  box-shadow: 0 0 14px rgba(227, 90, 72, 0.25);
 }
 
 .loading {

@@ -53,6 +53,16 @@ Every critical path is explainable: which facts fired, which factors weighed, wh
 
 ## Architecture (summary)
 
+```mermaid
+flowchart LR
+  YAML[YAML scenarios] --> Engine[Replay engine]
+  Engine --> Baseline[Sensor baseline]
+  Engine --> Fusion[Rules + ML fusion]
+  Fusion --> Cite[Citations]
+  Engine -->|WS| Twin[Three.js twin]
+  Fusion --> Panel[Assessment + decide]
+```
+
 | Surface | Role |
 |---------|------|
 | API | Scenario runs, assessments, decisions, health |
@@ -62,7 +72,7 @@ Every critical path is explainable: which facts fired, which factors weighed, wh
 | Knowledge | Retrieval-backed citations on critical outcomes |
 | Console | Digital Twin · Assessment · Decision |
 
-Detailed design lives in [`docs/`](docs/).
+Details: [`docs/architecture.md`](docs/architecture.md) · Record: [`docs/demo-script.md`](docs/demo-script.md)
 
 ---
 
@@ -79,6 +89,7 @@ docs/           # Product, architecture, contracts, ADRs
 | [`docs/overview.md`](docs/overview.md) | Product overview |
 | [`docs/stack.md`](docs/stack.md) | Engineering shape |
 | [`docs/architecture.md`](docs/architecture.md) | System design |
+| [`docs/demo-script.md`](docs/demo-script.md) | 90–120s demo narration |
 | [`docs/prd.md`](docs/prd.md) | Requirements |
 | [`docs/api.md`](docs/api.md) | API contracts |
 | [`docs/data-model.md`](docs/data-model.md) | Canonical types |
