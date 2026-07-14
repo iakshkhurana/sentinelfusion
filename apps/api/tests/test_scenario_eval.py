@@ -30,7 +30,9 @@ def test_fusion_beats_baseline_before_incident(path: Path) -> None:
         f"{path.stem}: fusion @{fusion}s not earlier than baseline @{baseline}s"
     )
     assert out["assessments"], f"{path.stem}: no assessments emitted"
-    assert any(a.get("citations") for a in out["assessments"] if a.get("severity") == "critical")
+    crit = next(a for a in out["assessments"] if a.get("severity") == "critical")
+    assert crit.get("citations"), f"{path.stem}: missing citations"
+    assert all(c.get("next_step") for c in crit["citations"]), f"{path.stem}: citation missing next_step"
 
 
 def test_health_and_model_ready() -> None:

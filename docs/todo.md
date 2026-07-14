@@ -45,8 +45,8 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 ## Phase 4 — Frontend product
 
-- [x] Plant twin zone labels + risk tint (permit overlays later)  
-- [ ] Risk rail + factor evidence drawer  
+- [x] Plant twin zone labels + risk tint + live PTW strip  
+- [x] Factor evidence + “what to do now” on critical cards  
 - [x] Baseline vs fusion comparison strip (proof line + metrics)  
 - [ ] Demo mode polish (brand, motion, empty/loading states)  
 
@@ -54,7 +54,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 - [ ] Corpus build (OISD / Factory Act / PTW procedure excerpts)  
 - [ ] Embeddings + vector store  
-- [ ] Alert-attached citations + “what to do now”  
+- [x] Alert-attached citations + “what to do now” (static corpus; vectors later)  
 - [ ] Optional HSE chat with citations  
 
 ## Phase 6 — DevOps + reliability

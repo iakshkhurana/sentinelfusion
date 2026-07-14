@@ -28,6 +28,11 @@ function zoneTitle(id) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function permitLabel(p) {
+  const kind = (p.permit_type || "permit").replaceAll("_", " ");
+  return `${kind} · ${zoneTitle(p.zone_id)} · ${p.status}`;
+}
+
 export default function App() {
   const [plant, setPlant] = useState(null);
   const [scenarios, setScenarios] = useState([]);
@@ -35,6 +40,7 @@ export default function App() {
   const [assessments, setAssessments] = useState([]);
   const [metrics, setMetrics] = useState(null);
   const [zonesTint, setZonesTint] = useState({});
+  const [permits, setPermits] = useState([]);
   const [tSec, setTSec] = useState(0);
   const [status, setStatus] = useState("idle");
   const [decision, setDecision] = useState(null);
@@ -54,6 +60,9 @@ export default function App() {
   }, []);
 
   const critical = assessments[0] ?? null;
+  const livePermits = permits.filter((p) =>
+    ["requested", "active"].includes(p.status),
+  );
 
   function onPlay() {
     setError(null);
@@ -61,6 +70,7 @@ export default function App() {
     setMetrics(null);
     setDecision(null);
     setZonesTint({});
+    setPermits([]);
     setTSec(0);
     setStatus("running");
     wsRef.current?.close();
@@ -73,6 +83,7 @@ export default function App() {
       if (msg.type === "twin.tick") {
         setTSec(msg.payload.t_sec ?? 0);
         setZonesTint(msg.payload.zones_tint || {});
+        setPermits(msg.payload.permits || []);
       }
       if (msg.type === "assessment.upsert") {
         setAssessments((prev) => [msg.payload, ...prev]);
@@ -158,6 +169,17 @@ export default function App() {
           </div>
         </div>
 
+        {livePermits.length > 0 && (
+          <div className="ptw-strip">
+            <span className="ptw-label">Active PTW</span>
+            {livePermits.map((p) => (
+              <span key={p.id} className={`ptw-chip ${p.permit_type || ""}`}>
+                {permitLabel(p)}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div className="legend">
           <span><i className="c-ok" /> Clear</span>
           <span><i className="c-warn" /> Elevated</span>
@@ -211,39 +233,52 @@ export default function App() {
         <div className="feed">
           {assessments.length === 0 && !decision && (
             <p className="empty">
-              Select a scenario and run it. Zones on the twin tint as fused risk rises —
-              then act from this panel.
+              Select a scenario and run it. Zones and PTWs update live — then act from this panel.
             </p>
           )}
 
-          {assessments.map((a) => (
-            <article key={a.id || a.title} className={`card ${a.severity}`}>
-              <div className="card-head">
-                <h2>{a.title}</h2>
-                <span className="score">
-                  {a.model_score != null ? `${(a.model_score * 100).toFixed(0)}%` : "—"}
-                </span>
-              </div>
-              <ul>
-                {a.factors?.slice(0, 3).map((f) => (
-                  <li key={f.code}>{f.label}</li>
-                ))}
-              </ul>
-              {a.citations?.[0] && (
-                <p className="cite">{a.citations[0].source}</p>
-              )}
-              {a.id && (
-                <button
-                  type="button"
-                  className="btn-act"
-                  disabled={deciding || decision?.assessment_id === a.id}
-                  onClick={() => onDecide(a)}
-                >
-                  {decision?.assessment_id === a.id ? "Executed" : actionLabel(a.recommended_action)}
-                </button>
-              )}
-            </article>
-          ))}
+          {assessments.map((a) => {
+            const cite = a.citations?.[0];
+            return (
+              <article key={a.id || a.title} className={`card ${a.severity}`}>
+                <div className="card-head">
+                  <h2>{a.title}</h2>
+                  <span className="score">
+                    {a.model_score != null ? `${(a.model_score * 100).toFixed(0)}%` : "—"}
+                  </span>
+                </div>
+                <ul>
+                  {a.factors?.slice(0, 3).map((f) => (
+                    <li key={f.code}>{f.label}</li>
+                  ))}
+                </ul>
+                {a.related_permit_ids?.length > 0 && (
+                  <p className="permit-ids">PTW: {a.related_permit_ids.join(", ")}</p>
+                )}
+                {cite && (
+                  <div className="evidence">
+                    <p className="cite">{cite.source}</p>
+                    {cite.excerpt && <p className="excerpt">{cite.excerpt}</p>}
+                    {cite.next_step && (
+                      <p className="next-step">
+                        <span>Now</span> {cite.next_step}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {a.id && (
+                  <button
+                    type="button"
+                    className="btn-act"
+                    disabled={deciding || decision?.assessment_id === a.id}
+                    onClick={() => onDecide(a)}
+                  >
+                    {decision?.assessment_id === a.id ? "Executed" : actionLabel(a.recommended_action)}
+                  </button>
+                )}
+              </article>
+            );
+          })}
 
           {decision && (
             <article className="card ok">
@@ -251,6 +286,9 @@ export default function App() {
                 <h2>{decision.message}</h2>
                 <span className="score">OK</span>
               </div>
+              {decision.blocked_permit_ids?.length > 0 && (
+                <p className="permit-ids">Blocked: {decision.blocked_permit_ids.join(", ")}</p>
+              )}
             </article>
           )}
         </div>
