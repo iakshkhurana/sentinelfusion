@@ -1,0 +1,58 @@
+id: hot_work_gas_adjacent
+title: Hot work beside rising CO
+description: >
+  CO rises in the coke oven battery while hot work is requested in the
+  adjacent maintenance bay — a compound SIMOPS miss.
+plant_id: steel_pack_v1
+duration_sec: 600
+incident_at_sec: 480
+events:
+  - t: 0
+    type: sensor
+    tag_id: tag_gas_co_01
+    zone_id: zone_coke_oven
+    metric: co_ppm
+    value: 18
+    unit: ppm
+  - t: 120
+    type: sensor
+    tag_id: tag_gas_co_01
+    zone_id: zone_coke_oven
+    metric: co_ppm
+    value: 42
+    unit: ppm
+  - t: 240
+    type: permit
+    id: ptw_hot_0042
+    permit_type: hot_work
+    status: requested
+    zone_id: zone_maintenance_bay
+    adjacent_zone_ids: [zone_coke_oven]
+    requester: contractor_alpha
+  - t: 300
+    type: sensor
+    tag_id: tag_gas_co_01
+    zone_id: zone_coke_oven
+    metric: co_ppm
+    value: 74
+    unit: ppm
+  - t: 300
+    type: permit
+    id: ptw_hot_0042
+    permit_type: hot_work
+    status: active
+    zone_id: zone_maintenance_bay
+    adjacent_zone_ids: [zone_coke_oven]
+    requester: contractor_alpha
+  - t: 420
+    type: sensor
+    tag_id: tag_gas_co_01
+    zone_id: zone_coke_oven
+    metric: co_ppm
+    value: 118
+    unit: ppm
+  - t: 480
+    type: incident
+    code: ignition_near_gas
+    zone_id: zone_coke_oven
+    note: Ignition risk at battery / bay interface
