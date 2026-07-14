@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+node_modules
+apps/web/dist
+apps/ml/artifacts/_local
+*.log
+.cursor
+agent-transcripts
+**/.DS_Store

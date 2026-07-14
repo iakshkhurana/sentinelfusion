@@ -58,9 +58,10 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 ## Phase 6 — DevOps + reliability
 
-- [ ] Docker Compose (api, web, vector DB, optional redis)  
-- [ ] Healthchecks, `.env.example`, seed command  
-- [ ] Seed script: scenarios + model artifact + corpus  
+- [x] Docker Compose (api + web; nginx proxies `/api` + WS)  
+- [x] API healthcheck + `.env.example`  
+- [ ] Seed script: scenarios + model artifact + corpus (artifacts already in-repo)  
+- [ ] Optional vector DB / redis when RAG is live  
 
 ## Phase 7 — Demo package
 

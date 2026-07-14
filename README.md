@@ -89,22 +89,31 @@ docs/           # Product, architecture, contracts, ADRs
 
 ## Quick start
 
-> Scaffolding lands in Phase 0. Target experience:
-
 ```bash
-# clone
-git clone <repo-url> && cd et-ai
+git clone https://github.com/iakshkhurana/sentinelfusion.git
+cd sentinelfusion
 
-# run the stack
 docker compose up --build
-
-# open the twin
-# web  → http://localhost:5173
-# api  → http://localhost:8000/api/v1/health
-# docs → http://localhost:8000/docs
 ```
 
-One plant. One scenario. Play — and watch assessment beat a naïve baseline.
+| Surface | URL |
+|---------|-----|
+| Twin console | http://localhost:5173 |
+| API health | http://localhost:8000/api/v1/health |
+| OpenAPI | http://localhost:8000/docs |
+
+Pick a scenario → **Run scenario** → watch fusion beat the single-sensor baseline → **Block permit** / escalate from the assessment panel.
+
+### Local (without Docker)
+
+```bash
+# API
+cd apps/api && pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+
+# Web (new terminal)
+cd apps/web && npm install && npm run dev
+```
 
 ---
 
@@ -122,7 +131,7 @@ Aligned with industrial safety outcomes that matter in the field:
 
 ## Status
 
-**Design in progress** — product docs, contracts, and architecture decision records are in place. Implementation follows [`docs/todo.md`](docs/todo.md).
+**Runnable demo** — Compose boots API + twin UI; YAML scenarios stream over WebSocket; compound ML + rule guardrails; decision flow with citations and lead-time metrics. Roadmap leftovers: [`docs/todo.md`](docs/todo.md).
 
 ---
 
