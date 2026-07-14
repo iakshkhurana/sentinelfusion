@@ -4,6 +4,8 @@ from pathlib import Path
 import yaml
 from fastapi import FastAPI, HTTPException
 
+from engine import replay
+
 app = FastAPI(title="SentinelFusion API", version="0.1.0")
 
 # ponytail: resolve scenarios from monorepo layout; swap for env var when packaging
@@ -28,6 +30,13 @@ def _scenario_summary(data: dict) -> dict:
     }
 
 
+def _scenario_or_404(scenario_id: str) -> dict:
+    path = _SCENARIOS / f"{scenario_id}.yaml"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="scenario_not_found")
+    return _load_yaml(path)
+
+
 @app.get("/api/v1/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "version": "0.1.0"}
@@ -49,10 +58,20 @@ def list_scenarios() -> list[dict]:
 
 @app.get("/api/v1/scenarios/{scenario_id}")
 def get_scenario(scenario_id: str) -> dict:
-    path = _SCENARIOS / f"{scenario_id}.yaml"
-    if not path.is_file():
-        raise HTTPException(status_code=404, detail="scenario_not_found")
-    data = _load_yaml(path)
+    data = _scenario_or_404(scenario_id)
     summary = _scenario_summary(data)
     summary["events"] = data.get("events", [])
     return summary
+
+
+@app.post("/api/v1/scenarios/{scenario_id}/run")
+def run_scenario(scenario_id: str) -> dict:
+    """Sync replay for now — live WebSocket twin comes next."""
+    data = _scenario_or_404(scenario_id)
+    result = replay(data)
+    return {
+        "scenario_id": scenario_id,
+        "status": "completed",
+        "assessments": result["assessments"],
+        "metrics": result["metrics"],
+    }
