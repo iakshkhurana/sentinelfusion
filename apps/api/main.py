@@ -149,8 +149,33 @@ async def ws_scenario(scenario_id: str, websocket: WebSocket) -> None:
         return
     await websocket.accept()
     data = _load_yaml(path)
+    state = {"paused": False}
+
+    async def listen_control() -> None:
+        try:
+            while True:
+                raw = await websocket.receive_json()
+                if raw.get("type") != "control":
+                    continue
+                cmd = raw.get("command")
+                if cmd == "pause":
+                    state["paused"] = True
+                    await websocket.send_json(
+                        {"type": "run.control", "payload": {"status": "paused"}}
+                    )
+                elif cmd == "resume":
+                    state["paused"] = False
+                    await websocket.send_json(
+                        {"type": "run.control", "payload": {"status": "running"}}
+                    )
+        except WebSocketDisconnect:
+            return
+
+    listener = asyncio.create_task(listen_control())
     try:
         for msg in iter_replay(data):
+            while state["paused"]:
+                await asyncio.sleep(0.05)
             if msg["type"] == "assessment.upsert":
                 _remember([msg["payload"]])
             elif msg["type"] == "run.done":
@@ -160,3 +185,9 @@ async def ws_scenario(scenario_id: str, websocket: WebSocket) -> None:
                 await asyncio.sleep(_TICK_PAUSE_SEC)
     except WebSocketDisconnect:
         return
+    finally:
+        listener.cancel()
+        try:
+            await listener
+        except asyncio.CancelledError:
+            pass

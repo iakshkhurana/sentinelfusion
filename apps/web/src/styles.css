@@ -195,6 +195,24 @@ body,
   cursor: not-allowed;
 }
 
+.btn-ghost {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--display);
+  font-weight: 650;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-ghost:hover {
+  border-color: rgba(94, 196, 168, 0.45);
+  color: var(--teal-bright);
+}
+
 .status-chip {
   display: flex;
   align-items: center;
@@ -216,6 +234,11 @@ body,
 .status-chip .dot.running {
   background: var(--teal-bright);
   box-shadow: 0 0 8px rgba(94, 196, 168, 0.7);
+}
+
+.status-chip .dot.running.paused {
+  background: var(--amber);
+  box-shadow: 0 0 8px rgba(224, 169, 58, 0.55);
 }
 
 .status-chip .t {

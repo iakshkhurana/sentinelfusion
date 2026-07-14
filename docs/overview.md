@@ -21,7 +21,7 @@ Others ship SOP chat. We ship a watchable ops brain:
 
 App boots on **Digital Twin · Demo Mode**:
 
-- Plant SVG heatmap + permit chips  
+- Three.js plant twin + zone labels + permit chips  
 - **Assessment panel** (severity, factors, baseline miss)  
 - **Decision flow** (recommend → confirm → execute)  
 

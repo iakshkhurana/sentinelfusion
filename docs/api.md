@@ -59,14 +59,21 @@ Headless replay (sync). Returns assessments + metrics for harness / fallback dem
 
 ### `WS /api/v1/ws/scenarios/{scenario_id}`
 
-Live demo path. Server streams envelopes (client receives only):
+Live demo path. Server streams envelopes; client may send control:
+
+```json
+{ "type": "control", "command": "pause" | "resume" }
+```
 
 | `type` | `payload` |
 |--------|-----------|
 | `twin.tick` | `{ t_sec, zones_tint, readings, permits, detections? }` |
 | `baseline.fire` | `{ t_sec, zone_id, tag_id }` |
 | `assessment.upsert` | `Assessment` (factors, citations, agents, ai, …) |
+| `run.control` | `{ status: "paused" \| "running" }` |
 | `run.done` | `{ scenario_id, assessments, metrics }` |
+
+Pause holds the tick loop (for narration). Scrub/seek is not implemented yet.
 
 ## Assessments & decisions
 

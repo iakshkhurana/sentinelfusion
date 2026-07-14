@@ -44,6 +44,7 @@ export default function App() {
   const [baselineFire, setBaselineFire] = useState(null);
   const [tSec, setTSec] = useState(0);
   const [status, setStatus] = useState("idle");
+  const [paused, setPaused] = useState(false);
   const [decision, setDecision] = useState(null);
   const [audit, setAudit] = useState([]);
   const [ask, setAsk] = useState("hot work near gas");
@@ -83,6 +84,7 @@ export default function App() {
     setPermits([]);
     setBaselineFire(null);
     setTSec(0);
+    setPaused(false);
     setStatus("running");
     wsRef.current?.close();
 
@@ -102,9 +104,13 @@ export default function App() {
       if (msg.type === "baseline.fire") {
         setBaselineFire(msg.payload);
       }
+      if (msg.type === "run.control") {
+        setPaused(msg.payload?.status === "paused");
+      }
       if (msg.type === "run.done") {
         setAssessments(msg.payload.assessments || []);
         setMetrics(msg.payload.metrics || null);
+        setPaused(false);
         setStatus("completed");
       }
     };
@@ -112,7 +118,17 @@ export default function App() {
       setError("API unreachable — start uvicorn on :8000");
       setStatus("error");
     };
-    ws.onclose = () => setStatus((s) => (s === "running" ? "completed" : s));
+    ws.onclose = () => {
+      setPaused(false);
+      setStatus((s) => (s === "running" ? "completed" : s));
+    };
+  }
+
+  function onPauseToggle() {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const command = paused ? "resume" : "pause";
+    ws.send(JSON.stringify({ type: "control", command }));
   }
 
   async function onAsk(e) {
@@ -195,11 +211,18 @@ export default function App() {
             <button type="button" className="btn-primary" onClick={onPlay} disabled={status === "running"}>
               {status === "running" ? "Running…" : "Run scenario"}
             </button>
+            {(status === "running") && (
+              <button type="button" className="btn-ghost" onClick={onPauseToggle}>
+                {paused ? "Resume" : "Pause"}
+              </button>
+            )}
           </div>
 
           <div className="status-chip">
-            <span className={`dot ${status}`} />
-            <span>{status === "running" ? "LIVE" : status.toUpperCase()}</span>
+            <span className={`dot ${status} ${paused ? "paused" : ""}`} />
+            <span>
+              {status === "running" ? (paused ? "PAUSED" : "LIVE") : status.toUpperCase()}
+            </span>
             <span className="t">{tSec}s</span>
           </div>
         </div>
