@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 
+from cites import search_knowledge
 from decisions import decide
 from engine import iter_replay, replay
 from scorer import model_ready
@@ -25,6 +26,11 @@ _decisions: list[dict] = []
 class DecideBody(BaseModel):
     confirm: bool = False
     notes: str | None = None
+
+
+class KnowledgeQuery(BaseModel):
+    question: str
+    top_k: int = 3
 
 
 def _load_yaml(path: Path) -> dict:
@@ -128,6 +134,11 @@ def decide_assessment(assessment_id: str, body: DecideBody = DecideBody()) -> di
 @app.get("/api/v1/decisions")
 def list_decisions() -> list[dict]:
     return list(reversed(_decisions))
+
+
+@app.post("/api/v1/knowledge/query")
+def knowledge_query(body: KnowledgeQuery) -> dict:
+    return search_knowledge(body.question, top_k=body.top_k)
 
 
 @app.websocket("/api/v1/ws/scenarios/{scenario_id}")

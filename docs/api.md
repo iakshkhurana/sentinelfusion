@@ -4,174 +4,107 @@ Base URL: `/api/v1`
 Canonical field names: `docs/data-model.md`  
 Error shape: `docs/conventions.md`
 
-## Health
+What runs today is listed below. OpenAPI: `/docs`.
 
-### `GET /health`
+## Health & ML
+
+### `GET /api/v1/health`
 
 ```json
-{ "status": "ok", "version": "0.1.0" }
+{ "status": "ok", "version": "0.1.0", "model_ready": true }
+```
+
+### `GET /api/v1/ml/model`
+
+```json
+{ "ready": true, "metrics": { /* training smoke metrics */ } }
 ```
 
 ## Plant
 
-### `GET /plant/layout`
+### `GET /api/v1/plant/layout?plant_id=steel_pack_v1`
 
-Returns zones (with `polygon`, `adjacent_zone_ids`) and assets.
-
-### `GET /plant/zones/{zone_id}`
-
-Single zone + current summary (latest scores if streaming mid-scenario).
+Zones (`polygon`, `adjacent_zone_ids`) + assets.
 
 ## Scenarios
 
-### `GET /scenarios`
+### `GET /api/v1/scenarios`
 
-List scenario summaries: `id`, `title`, `duration_sec`, `incident_at_sec`.
+Summaries: `id`, `title`, `description`, `duration_sec`, `incident_at_sec`, `plant_id`.
 
-### `GET /scenarios/{scenario_id}`
+### `GET /api/v1/scenarios/{scenario_id}`
 
-Full scenario metadata (not the full tick dump).
+Summary + full `events` list.
 
-### `POST /scenarios/{scenario_id}/run`
+### `POST /api/v1/scenarios/{scenario_id}/run`
 
-Start / reset a run.
+Headless replay (sync). Returns assessments + metrics for harness / fallback demos.
 
 ```json
 {
-  "speed": 1.0,
-  "start_at_sec": 0
+  "scenario_id": "hot_work_gas_adjacent",
+  "status": "completed",
+  "assessments": [/* Assessment */],
+  "metrics": {
+    "incident_at_sec": 480,
+    "baseline_first_fire_sec": 420,
+    "fusion_first_critical_sec": 300,
+    "lead_time_sec": 180,
+    "baseline_miss": true,
+    "false_negative_baseline": false,
+    "false_negative_fusion": false
+  }
 }
 ```
 
-Response: `{ "run_id": "...", "scenario_id": "...", "status": "running" }`
+### `WS /api/v1/ws/scenarios/{scenario_id}`
 
-### `POST /runs/{run_id}/control`
-
-```json
-{ "command": "pause" | "resume" | "scrub", "at_sec": 120 }
-```
-
-`at_sec` required for `scrub`.
-
-### `GET /runs/{run_id}`
-
-Run status: `running` \| `paused` \| `completed`, `t_sec`, counters.
-
-### `WS /ws/runs/{run_id}` (WebSocket)
-
-Live nervous system. Client connects after `POST .../run`. JSON envelopes:
-
-```json
-{ "type": "twin.tick", "ts": "...", "payload": { } }
-```
+Live demo path. Server streams envelopes (client receives only):
 
 | `type` | `payload` |
 |--------|-----------|
-| `twin.tick` | `{ "t_sec", "readings", "permits", "maintenance", "zones_tint" }` |
-| `facts.derived` | `{ "facts": DerivedFact[] }` |
-| `baseline.fire` | `{ "zone_id", "tag_id", "t_sec" }` |
-| `assessment.upsert` | `Assessment` |
-| `decision.transition` | `Decision` |
-| `metrics.snapshot` | lead time / FN vs baseline |
-| `ai.error` | `{ "code", "message", "retries": 1 }` visible failure |
-| `run.done` | summary |
-
-REST owns commands; WS is broadcast-only from server (clients may send `{ "type": "ping" }` only).
+| `twin.tick` | `{ t_sec, zones_tint, readings, permits, detections? }` |
+| `baseline.fire` | `{ t_sec, zone_id, tag_id }` |
+| `assessment.upsert` | `Assessment` (factors, citations, agents, ai, …) |
+| `run.done` | `{ scenario_id, assessments, metrics }` |
 
 ## Assessments & decisions
 
-### `GET /assessments`
+Assessments are retained in-memory from the last sync/WS runs (demo process).
 
-Query: `run_id?, zone_id?, severity?, limit?`
-
-### `GET /assessments/{id}`
-
-Includes `factors`, `citation_ids`; `?include=citations,decision`.
-
-### `POST /assessments/{id}/decisions`
-
-Advance / act on the decision state machine.
+### `POST /api/v1/assessments/{assessment_id}/decide`
 
 ```json
-{
-  "action": "block_permit",
-  "transition": "confirm",
-  "confirm": false,
-  "notes": "optional"
-}
+{ "confirm": false, "notes": "optional" }
 ```
 
 | Rule | Behavior |
 |------|----------|
-| `transition` | `confirm` \| `dismiss` \| `execute` (as allowed by SM) |
 | `evacuate` | requires `confirm: true` else `400` `confirmation_required` |
-| `block_permit` + Demo Mode | may auto-confirm when policy says so |
+| `block_permit` | returns blocked permit ids |
+| unknown action | `400` `unknown_action` |
 
-### `GET /assessments/{id}/evidence-pack`
+### `GET /api/v1/decisions`
 
-Returns `EvidencePack`.
+Newest-first decision audit trail for the process lifetime.
 
-## Baseline vs fusion metrics
+## Knowledge (thin RAG)
 
-### `GET /runs/{run_id}/metrics`
+### `POST /api/v1/knowledge/query`
+
+Keyword recall over `packages/knowledge/excerpts.json` (no vector DB yet).
+
+```json
+{ "question": "hot work near gas", "top_k": 3 }
+```
 
 ```json
 {
-  "run_id": "...",
-  "scenario_id": "...",
-  "incident_at_sec": 480,
-  "baseline_first_fire_sec": null,
-  "fusion_first_critical_sec": 312,
-  "lead_time_sec": 168,
-  "baseline_miss": true,
-  "false_negative_baseline": true,
-  "false_negative_fusion": false
+  "answer": "Block / suspend the hot-work PTW until gas is independently cleared.",
+  "citations": [{ "code": "hot_work_adjacent", "source": "…", "excerpt": "…", "next_step": "…" }]
 }
 ```
-
-## RAG
-
-### `POST /rag/query`
-
-```json
-{
-  "question": "What controls apply for hot work near gas?",
-  "risk_event_id": "optional-uuid",
-  "top_k": 3
-}
-```
-
-Response:
-
-```json
-{
-  "answer": "short guidance",
-  "citations": [/* Citation */]
-}
-```
-
-### `POST /assessments/{id}/attach-citations`
-
-Server retrieves and stores citations; returns updated `Assessment`.
-
-## ML (internal / demo)
-
-### `GET /ml/model`
-
-`{ "name", "version", "trained_at", "feature_names": [] }`
-
-### `POST /ml/score` (debug)
-
-```json
-{ "features": { "gas_zscore": 2.1, "hot_work_adjacent": 1, "...": 0 } }
-```
-
-Returns `{ "score", "severity", "factor_hints": [] }` — production path is via assessment pipeline on ticks.
 
 ## Auth
 
-v1: no auth (local/demo). If added later, Bearer token; document in a new ADR.
-
-## OpenAPI
-
-FastAPI serves `/docs` (Swagger) and `/redoc`. Keep handlers aligned with this file; this file wins on naming disputes until updated.
+v1: no auth (local/demo).

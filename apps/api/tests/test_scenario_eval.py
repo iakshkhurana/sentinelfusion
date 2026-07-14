@@ -47,13 +47,25 @@ def test_fusion_beats_baseline_before_incident(path: Path) -> None:
 
 
 def test_knowledge_corpus_loaded() -> None:
-    from cites import _corpus, citations_for
+    from cites import _corpus, citations_for, search_knowledge
 
     corpus = _corpus()
     assert "hot_work_adjacent" in corpus
     cite = citations_for(["hot_work_adjacent"])[0]
     assert cite["next_step"]
     assert cite["source"]
+    hit = search_knowledge("hot work near gas")
+    assert hit["citations"]
+    assert "hot_work" in hit["answer"].lower() or hit["citations"][0]["code"] == "hot_work_adjacent"
+
+
+def test_knowledge_query_endpoint() -> None:
+    client = TestClient(app)
+    res = client.post("/api/v1/knowledge/query", json={"question": "confined space gas"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["answer"]
+    assert body["citations"]
 
 
 def test_health_and_model_ready() -> None:

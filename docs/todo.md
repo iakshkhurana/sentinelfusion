@@ -54,7 +54,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] Corpus build (`packages/knowledge/excerpts.json` — illustrative)  
 - [ ] Embeddings + vector store  
 - [x] Alert-attached citations + “what to do now” (static corpus; vectors later)  
-- [ ] Optional HSE chat with citations  
+- [x] Optional HSE ask with citations (`POST /knowledge/query`)  
 
 ## Phase 6 — DevOps + reliability
 

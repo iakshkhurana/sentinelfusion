@@ -46,6 +46,9 @@ export default function App() {
   const [status, setStatus] = useState("idle");
   const [decision, setDecision] = useState(null);
   const [audit, setAudit] = useState([]);
+  const [ask, setAsk] = useState("hot work near gas");
+  const [knowledge, setKnowledge] = useState(null);
+  const [asking, setAsking] = useState(false);
   const [deciding, setDeciding] = useState(false);
   const [error, setError] = useState(null);
   const wsRef = useRef(null);
@@ -110,6 +113,24 @@ export default function App() {
       setStatus("error");
     };
     ws.onclose = () => setStatus((s) => (s === "running" ? "completed" : s));
+  }
+
+  async function onAsk(e) {
+    e?.preventDefault?.();
+    setAsking(true);
+    setError(null);
+    try {
+      const out = await getJson("/api/v1/knowledge/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: ask, top_k: 3 }),
+      });
+      setKnowledge(out);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAsking(false);
+    }
   }
 
   async function onDecide(assessment) {
@@ -348,6 +369,28 @@ export default function App() {
               )}
             </article>
           )}
+
+          <section className="hse">
+            <h3>HSE ask</h3>
+            <form onSubmit={onAsk} className="hse-form">
+              <input
+                value={ask}
+                onChange={(e) => setAsk(e.target.value)}
+                placeholder="e.g. hot work near gas"
+              />
+              <button type="submit" disabled={asking || !ask.trim()}>
+                {asking ? "…" : "Ask"}
+              </button>
+            </form>
+            {knowledge && (
+              <div className="hse-answer">
+                <p>{knowledge.answer}</p>
+                {knowledge.citations?.[0] && (
+                  <small>{knowledge.citations[0].source}</small>
+                )}
+              </div>
+            )}
+          </section>
 
           {audit.length > 0 && (
             <section className="audit">

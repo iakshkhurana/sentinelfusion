@@ -658,6 +658,77 @@ body,
   cursor: not-allowed;
 }
 
+.hse {
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line);
+}
+
+.hse h3 {
+  margin: 0 0 0.45rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  font-weight: 500;
+}
+
+.hse-form {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.hse-form input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.78rem;
+}
+
+.hse-form button {
+  border: none;
+  border-radius: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--teal);
+  color: #f4fffb;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.hse-form button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hse-answer {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.55rem;
+  border-radius: 0.45rem;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.hse-answer p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.hse-answer small {
+  display: block;
+  margin-top: 0.35rem;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--teal-bright);
+}
+
 .audit {
   margin-top: 0.35rem;
   padding-top: 0.65rem;

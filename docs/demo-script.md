@@ -11,7 +11,7 @@ Record against `docker compose up --build` → http://localhost:5173
 | 25–45s | Select **Hot work beside rising CO** → **Run scenario**. Narrate ticks lighting zones. |
 | 45–70s | CRITICAL: **Hot zone** + PTW + **vision** agent lit (camera corroboration). Race strip: Fusion before Baseline. |
 | 70–95s | When baseline finally fires, call **“Fusion led by Ns”**. Now-step + **Block permit**. |
-| 95–120s | Close: “Same story for confined space and maintenance-on-gas-path. Compose one-command. Eval harness green on all three.” |
+| 95–120s | Optional: **HSE ask** “hot work near gas” → citation. Close: Compose + eval harness green on all three. |
 
 ## Numbers to quote (hot_work)
 
