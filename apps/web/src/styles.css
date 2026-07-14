@@ -637,6 +637,55 @@ body,
   cursor: not-allowed;
 }
 
+.audit {
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line);
+}
+
+.audit h3 {
+  margin: 0 0 0.45rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  font-weight: 500;
+}
+
+.audit ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.audit li {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.45rem;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--line);
+  font-size: 0.72rem;
+  color: var(--mute);
+}
+
+.audit-action {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal-bright);
+}
+
+.audit time {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  color: rgba(138, 150, 165, 0.75);
+}
+
 .error {
   margin: 0 1.1rem 1rem;
   color: var(--red);

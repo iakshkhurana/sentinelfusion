@@ -36,6 +36,16 @@ def test_fusion_beats_baseline_before_incident(path: Path) -> None:
     assert {a["agent"] for a in crit.get("agents") or []} == {"sensor", "permit", "ops"}
 
 
+def test_knowledge_corpus_loaded() -> None:
+    from cites import _corpus, citations_for
+
+    corpus = _corpus()
+    assert "hot_work_adjacent" in corpus
+    cite = citations_for(["hot_work_adjacent"])[0]
+    assert cite["next_step"]
+    assert cite["source"]
+
+
 def test_health_and_model_ready() -> None:
     client = TestClient(app)
     res = client.get("/api/v1/health")

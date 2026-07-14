@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY apps/api /app/apps/api
 COPY apps/ml /app/apps/ml
 COPY packages/scenarios /app/packages/scenarios
+COPY packages/knowledge /app/packages/knowledge
 
 WORKDIR /app/apps/api
 ENV PYTHONUNBUFFERED=1

@@ -41,7 +41,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] Sensor / Permit / Ops agents as real modules (`apps/api/agents/`)  
 - [x] Fusion coordinator (clean pipeline; LangGraph later if needed)  
 - [x] Action playbooks: alert · block permit · escalate · evidence  
-- [ ] Audit log UI for `/api/v1/decisions`  
+- [x] Audit log UI for `/api/v1/decisions`  
 
 ## Phase 4 — Frontend product
 
@@ -53,7 +53,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 ## Phase 5 — RAG (full, attached to actions)
 
-- [ ] Corpus build (OISD / Factory Act / PTW procedure excerpts)  
+- [x] Corpus build (`packages/knowledge/excerpts.json` — illustrative)  
 - [ ] Embeddings + vector store  
 - [x] Alert-attached citations + “what to do now” (static corpus; vectors later)  
 - [ ] Optional HSE chat with citations  

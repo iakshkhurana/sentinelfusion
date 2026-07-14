@@ -45,16 +45,22 @@ export default function App() {
   const [tSec, setTSec] = useState(0);
   const [status, setStatus] = useState("idle");
   const [decision, setDecision] = useState(null);
+  const [audit, setAudit] = useState([]);
   const [deciding, setDeciding] = useState(false);
   const [error, setError] = useState(null);
   const wsRef = useRef(null);
 
   useEffect(() => {
-    Promise.all([getJson("/api/v1/plant/layout"), getJson("/api/v1/scenarios")])
-      .then(([layout, list]) => {
+    Promise.all([
+      getJson("/api/v1/plant/layout"),
+      getJson("/api/v1/scenarios"),
+      getJson("/api/v1/decisions").catch(() => []),
+    ])
+      .then(([layout, list, decisions]) => {
         setPlant(layout);
         setScenarios(list);
         if (list[0]) setScenarioId(list[0].id);
+        setAudit(decisions || []);
       })
       .catch((e) => setError(e.message));
     return () => wsRef.current?.close();
@@ -118,6 +124,8 @@ export default function App() {
         }),
       });
       setDecision(out);
+      const log = await getJson("/api/v1/decisions");
+      setAudit(log);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -332,6 +340,21 @@ export default function App() {
                 <p className="permit-ids">Blocked: {decision.blocked_permit_ids.join(", ")}</p>
               )}
             </article>
+          )}
+
+          {audit.length > 0 && (
+            <section className="audit">
+              <h3>Decision audit</h3>
+              <ul>
+                {audit.slice(0, 6).map((d) => (
+                  <li key={d.id}>
+                    <span className="audit-action">{d.action}</span>
+                    <span>{d.message}</span>
+                    <time>{(d.ts || "").replace("T", " ").slice(0, 19)}</time>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
         </div>
 

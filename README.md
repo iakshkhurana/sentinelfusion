@@ -80,7 +80,7 @@ Details: [`docs/architecture.md`](docs/architecture.md) · Record: [`docs/demo-s
 
 ```text
 apps/           # API, web console, ML artifacts
-packages/       # Scenarios and shared plant packs
+packages/       # Scenarios, plant packs, knowledge excerpts
 docs/           # Product, architecture, contracts, ADRs
 ```
 
