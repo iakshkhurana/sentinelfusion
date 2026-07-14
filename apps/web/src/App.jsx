@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 async function getJson(path, init) {
   const res = await fetch(path, init);
@@ -6,9 +6,18 @@ async function getJson(path, init) {
   return res.json();
 }
 
-function zoneFill(zoneId, criticalZoneId, gasZones) {
+function wsUrl(scenarioId) {
+  const proto = window.location.protocol === "https:" ? "wss" : "ws";
+  return `${proto}://${window.location.host}/api/v1/ws/scenarios/${scenarioId}`;
+}
+
+function zoneFill(zoneId, criticalZoneId, zonesTint, gasZones) {
   if (zoneId === criticalZoneId) return "rgba(255, 90, 79, 0.72)";
-  if (gasZones.has(zoneId)) return "rgba(230, 184, 77, 0.55)";
+  const level = zonesTint[zoneId] ?? 0;
+  if (level > 0 || gasZones.has(zoneId)) {
+    const a = 0.28 + Math.max(level, gasZones.has(zoneId) ? 0.4 : 0) * 0.5;
+    return `rgba(230, 184, 77, ${a})`;
+  }
   return "rgba(40, 70, 58, 0.55)";
 }
 
@@ -16,9 +25,13 @@ export default function App() {
   const [plant, setPlant] = useState(null);
   const [scenarios, setScenarios] = useState([]);
   const [scenarioId, setScenarioId] = useState("hot_work_gas_adjacent");
-  const [result, setResult] = useState(null);
-  const [busy, setBusy] = useState(false);
+  const [assessments, setAssessments] = useState([]);
+  const [metrics, setMetrics] = useState(null);
+  const [zonesTint, setZonesTint] = useState({});
+  const [tSec, setTSec] = useState(0);
+  const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
+  const wsRef = useRef(null);
 
   useEffect(() => {
     Promise.all([getJson("/api/v1/plant/layout"), getJson("/api/v1/scenarios")])
@@ -28,36 +41,57 @@ export default function App() {
         if (list[0]) setScenarioId(list[0].id);
       })
       .catch((e) => setError(e.message));
+    return () => wsRef.current?.close();
   }, []);
 
-  const critical = result?.assessments?.[0] ?? null;
-  const gasZones = useMemo(() => {
-    // from assessment factors / related zone — coke oven is the gas side of hero scenario
-    if (!critical) return new Set();
-    return new Set(["zone_coke_oven", critical.zone_id]);
-  }, [critical]);
+  const critical = assessments[0] ?? null;
+  const gasZones = useMemo(
+    () => new Set(critical?.gas_zone_ids?.length ? critical.gas_zone_ids : []),
+    [critical],
+  );
 
-  async function onPlay() {
-    setBusy(true);
+  function onPlay() {
     setError(null);
-    try {
-      const out = await getJson(`/api/v1/scenarios/${scenarioId}/run`, { method: "POST" });
-      setResult(out);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
+    setAssessments([]);
+    setMetrics(null);
+    setZonesTint({});
+    setTSec(0);
+    setStatus("running");
+    wsRef.current?.close();
 
-  const m = result?.metrics;
+    const ws = new WebSocket(wsUrl(scenarioId));
+    wsRef.current = ws;
+
+    ws.onmessage = (ev) => {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === "twin.tick") {
+        setTSec(msg.payload.t_sec ?? 0);
+        setZonesTint(msg.payload.zones_tint || {});
+      }
+      if (msg.type === "assessment.upsert") {
+        setAssessments((prev) => [msg.payload, ...prev]);
+      }
+      if (msg.type === "run.done") {
+        setAssessments(msg.payload.assessments || []);
+        setMetrics(msg.payload.metrics || null);
+        setStatus("completed");
+      }
+    };
+    ws.onerror = () => {
+      setError("WebSocket failed — is the API running?");
+      setStatus("error");
+    };
+    ws.onclose = () => {
+      setStatus((s) => (s === "running" ? "completed" : s));
+    };
+  }
 
   return (
     <div className="app">
       <header className="top">
         <div>
           <h1>SentinelFusion</h1>
-          <p>Digital Twin · Demo Mode</p>
+          <p>Digital Twin · Demo Mode · live</p>
         </div>
         <div className="pill">DEMO MODE</div>
       </header>
@@ -65,26 +99,38 @@ export default function App() {
       <div className="grid">
         <section className="panel">
           <div className="row">
-            <select value={scenarioId} onChange={(e) => setScenarioId(e.target.value)}>
+            <select
+              value={scenarioId}
+              onChange={(e) => setScenarioId(e.target.value)}
+              disabled={status === "running"}
+            >
               {scenarios.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.title}
                 </option>
               ))}
             </select>
-            <button className="primary" type="button" onClick={onPlay} disabled={busy}>
-              {busy ? "Running…" : "Play scenario"}
+            <button
+              className="primary"
+              type="button"
+              onClick={onPlay}
+              disabled={status === "running"}
+            >
+              {status === "running" ? "Streaming…" : "Play scenario"}
             </button>
           </div>
 
-          {m && (
-            <div className="meta">
-              <span>fusion @ {m.fusion_first_critical_sec ?? "—"}s</span>
-              <span>baseline @ {m.baseline_first_fire_sec ?? "—"}s</span>
-              <span>lead {m.lead_time_sec ?? "—"}s</span>
-              <span>{m.baseline_miss ? "baseline late/miss" : "baseline ok"}</span>
-            </div>
-          )}
+          <div className="meta">
+            <span>t = {tSec}s</span>
+            <span>status = {status}</span>
+            {metrics && (
+              <>
+                <span>fusion @ {metrics.fusion_first_critical_sec ?? "—"}s</span>
+                <span>baseline @ {metrics.baseline_first_fire_sec ?? "—"}s</span>
+                <span>lead {metrics.lead_time_sec ?? "—"}s</span>
+              </>
+            )}
+          </div>
           {error && <p className="muted">Error: {error}</p>}
 
           {!plant ? (
@@ -105,7 +151,7 @@ export default function App() {
                   <g key={z.id}>
                     <polygon
                       points={points}
-                      fill={zoneFill(z.id, critical?.zone_id, gasZones)}
+                      fill={zoneFill(z.id, critical?.zone_id, zonesTint, gasZones)}
                       stroke={
                         z.id === critical?.zone_id
                           ? "rgba(255,90,79,0.95)"
@@ -125,9 +171,11 @@ export default function App() {
 
         <aside className="panel">
           <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Assessment</h2>
-          {!result && <p className="muted">Play a scenario to see compound risk.</p>}
-          {result?.assessments?.map((a, i) => (
-            <article key={`${a.title}-${i}`} className={`card ${a.severity}`}>
+          {assessments.length === 0 && (
+            <p className="muted">Play a scenario — watch risk form as ticks stream in.</p>
+          )}
+          {assessments.map((a, i) => (
+            <article key={`${a.title}-${a.t_sec}-${i}`} className={`card ${a.severity}`}>
               <div className="sev">{a.severity}</div>
               <strong>{a.title}</strong>
               <div className="meta">

@@ -1,15 +1,18 @@
+import asyncio
 import json
 from pathlib import Path
 
 import yaml
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
-from engine import replay
+from engine import iter_replay, replay
 
 app = FastAPI(title="SentinelFusion API", version="0.1.0")
 
 # ponytail: resolve scenarios from monorepo layout; swap for env var when packaging
 _SCENARIOS = Path(__file__).resolve().parents[2] / "packages" / "scenarios"
+# demo pacing between live ticks
+_TICK_PAUSE_SEC = 0.45
 
 
 def _load_yaml(path: Path) -> dict:
@@ -66,7 +69,6 @@ def get_scenario(scenario_id: str) -> dict:
 
 @app.post("/api/v1/scenarios/{scenario_id}/run")
 def run_scenario(scenario_id: str) -> dict:
-    """Sync replay for now — live WebSocket twin comes next."""
     data = _scenario_or_404(scenario_id)
     result = replay(data)
     return {
@@ -75,3 +77,20 @@ def run_scenario(scenario_id: str) -> dict:
         "assessments": result["assessments"],
         "metrics": result["metrics"],
     }
+
+
+@app.websocket("/api/v1/ws/scenarios/{scenario_id}")
+async def ws_scenario(scenario_id: str, websocket: WebSocket) -> None:
+    path = _SCENARIOS / f"{scenario_id}.yaml"
+    if not path.is_file():
+        await websocket.close(code=4404)
+        return
+    await websocket.accept()
+    data = _load_yaml(path)
+    try:
+        for msg in iter_replay(data):
+            await websocket.send_json(msg)
+            if msg["type"] != "run.done":
+                await asyncio.sleep(_TICK_PAUSE_SEC)
+    except WebSocketDisconnect:
+        return
