@@ -6,7 +6,7 @@ A task is **not done** until the checks below that apply to the change are green
 
 ```bash
 # API
-cd apps/api && uv run pytest -q
+cd apps/api && python -m pytest -q
 
 # Web
 cd apps/web && pnpm test

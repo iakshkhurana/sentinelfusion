@@ -9,7 +9,8 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [ ] Canonical schemas + zone adjacency graph (from `docs/data-model.md`)  
 - [ ] SVG plant layout (6+ zones)  
 - [ ] ≥3 YAML scenarios with ground-truth `incident_at_sec`  
-- [ ] Skeleton pytest + Vitest + WS test helper per `docs/testing.md`  
+- [x] Pytest scenario eval harness (all packaged YAMLs) + health/run smoke  
+- [ ] Vitest + WS test helper (web)  
 
 ## Phase 0b — Brain spine stubs
 
@@ -46,7 +47,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 - [ ] Plant heatmap + permit overlays + adjacency cues  
 - [ ] Risk rail + factor evidence drawer  
-- [ ] Baseline vs fusion comparison strip  
+- [x] Baseline vs fusion comparison strip (proof line + metrics)  
 - [ ] Demo mode polish (brand, motion, empty/loading states)  
 
 ## Phase 5 — RAG (full, attached to actions)

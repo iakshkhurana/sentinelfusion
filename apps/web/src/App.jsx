@@ -180,20 +180,32 @@ export default function App() {
         </header>
 
         {metrics && (
-          <div className="metrics">
-            <div>
-              <small>Fusion first</small>
-              <b>@{metrics.fusion_first_critical_sec ?? "—"}s</b>
+          <section className="proof">
+            <p className="proof-line">
+              Fusion critical at <b>@{metrics.fusion_first_critical_sec ?? "—"}s</b>
+              {" · "}
+              baseline{" "}
+              {metrics.baseline_first_fire_sec == null
+                ? "missed"
+                : `fired @${metrics.baseline_first_fire_sec}s`}
+              {" · "}
+              <span className="lead">+{metrics.lead_time_sec ?? "—"}s lead</span>
+            </p>
+            <div className="metrics">
+              <div>
+                <small>Fusion first</small>
+                <b>@{metrics.fusion_first_critical_sec ?? "—"}s</b>
+              </div>
+              <div>
+                <small>Baseline</small>
+                <b>@{metrics.baseline_first_fire_sec ?? "—"}s</b>
+              </div>
+              <div>
+                <small>Lead time</small>
+                <b className="lead">{metrics.lead_time_sec ?? "—"}s</b>
+              </div>
             </div>
-            <div>
-              <small>Baseline</small>
-              <b>@{metrics.baseline_first_fire_sec ?? "—"}s</b>
-            </div>
-            <div>
-              <small>Lead time</small>
-              <b className="lead">{metrics.lead_time_sec ?? "—"}s</b>
-            </div>
-          </div>
+          </section>
         )}
 
         <div className="feed">
