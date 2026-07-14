@@ -60,7 +60,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 - [x] Docker Compose (api + web; nginx proxies `/api` + WS)  
 - [x] API healthcheck + `.env.example`  
-- [ ] Seed script: scenarios + model artifact + corpus (artifacts already in-repo)  
+- [x] Verify script (`scripts/verify.ps1` / `verify.sh`) — artifacts already in-repo  
 - [ ] Optional vector DB / redis when RAG is live  
 
 ## Phase 7 — Demo package
@@ -73,7 +73,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 ## Stretch (if crushing it)
 
-- [ ] Simple CV stub (PPE / zone intrusion) as side signal into fusion  
+- [x] Simple CV stub (vision agent + `cv` events; corroborates, does not sole-force)  
 - [ ] Neo4j equipment–permit–hazard graph view  
 - [ ] Multi-plant config packs  
 

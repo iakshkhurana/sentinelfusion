@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from agents import ops, permit, sensor
+from agents import ops, permit, sensor, vision
 from ai import brief
 from cites import citations_for
 from features_bridge import extract_features, vectorize
@@ -73,12 +73,14 @@ def fuse(
     sensors: dict[str, dict],
     permits: dict[str, dict],
     maintenance: dict[str, dict],
+    detections: dict[str, dict] | None = None,
     baseline_first: float | None,
 ) -> dict | None:
     sensor_r = sensor.evaluate(sensors)
     permit_r = permit.evaluate(permits, sensor_r)
     ops_r = ops.evaluate(maintenance, sensor_r, permits)
-    agents = [sensor_r, permit_r, ops_r]
+    vision_r = vision.evaluate(detections or {})
+    agents = [sensor_r, permit_r, ops_r, vision_r]
 
     feats = extract_features(sensors, permits, maintenance)
     ml = score_features(vectorize(feats))
@@ -90,12 +92,17 @@ def fuse(
         return None
 
     if rule is not None:
+        # Vision corroborates; does not alone force critical (ponytail ceiling)
         score = max(rule["rule_score"], model_score or 0.0)
+        if vision_r["facts"]:
+            score = min(0.99, score + 0.02)
         rule_forced = True
         title = rule["title"]
         zone_id = rule["zone_id"]
         action = rule["recommended_action"]
-        factors = rule["factors"]
+        factors = list(rule["factors"])
+        for vf in vision_r["facts"][:1]:
+            factors.append({"code": vf["code"], "label": vf["label"]})
         related = rule["related_permit_ids"]
         gas_zone_ids = rule["gas_zone_ids"]
     else:

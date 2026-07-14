@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Iterator
 from typing import Any
 
@@ -63,6 +64,7 @@ def _assess_compound(
     sensors: dict[str, dict],
     permits: dict[str, dict],
     maintenance: dict[str, dict],
+    detections: dict[str, dict],
     baseline_first: float | None,
 ) -> dict | None:
     return fuse(
@@ -70,6 +72,7 @@ def _assess_compound(
         sensors=sensors,
         permits=permits,
         maintenance=maintenance,
+        detections=detections,
         baseline_first=baseline_first,
     )
 
@@ -79,25 +82,34 @@ def iter_replay(scenario: dict) -> Iterator[dict[str, Any]]:
     sensors: dict[str, dict] = {}
     permits: dict[str, dict] = {}
     maintenance: dict[str, dict] = {}
+    detections: dict[str, dict] = {}
     assessments: list[dict] = []
     baseline_first: float | None = None
     fusion_first: float | None = None
     seen_critical = False
 
     incident_at = float(scenario["incident_at_sec"])
-    events = sorted(scenario.get("events", []), key=lambda e: float(e["t"]))
+    by_t: dict[float, list[dict]] = defaultdict(list)
+    for ev in scenario.get("events", []):
+        by_t[float(ev["t"])].append(ev)
 
-    for ev in events:
-        t = float(ev["t"])
-        etype = ev.get("type")
+    for t in sorted(by_t):
+        batch = by_t[t]
+        incident = None
+        for ev in batch:
+            etype = ev.get("type")
+            if etype == "sensor":
+                sensors[ev["tag_id"]] = ev
+            elif etype == "permit":
+                permits[ev["id"]] = ev
+            elif etype == "maintenance":
+                maintenance[ev["id"]] = ev
+            elif etype == "cv":
+                detections[ev.get("camera_id") or ev.get("id") or f"cv_{t}"] = ev
+            elif etype == "incident":
+                incident = ev
 
-        if etype == "sensor":
-            sensors[ev["tag_id"]] = ev
-        elif etype == "permit":
-            permits[ev["id"]] = ev
-        elif etype == "maintenance":
-            maintenance[ev["id"]] = ev
-        elif etype == "incident":
+        if incident is not None:
             yield {
                 "type": "twin.tick",
                 "payload": {
@@ -105,7 +117,8 @@ def iter_replay(scenario: dict) -> Iterator[dict[str, Any]]:
                     "zones_tint": _zones_tint(sensors),
                     "readings": list(sensors.values()),
                     "permits": list(permits.values()),
-                    "incident": ev,
+                    "detections": list(detections.values()),
+                    "incident": incident,
                 },
             }
             continue
@@ -123,6 +136,7 @@ def iter_replay(scenario: dict) -> Iterator[dict[str, Any]]:
                 sensors=sensors,
                 permits=permits,
                 maintenance=maintenance,
+                detections=detections,
                 baseline_first=baseline_first,
             )
             if assessment:
@@ -137,6 +151,7 @@ def iter_replay(scenario: dict) -> Iterator[dict[str, Any]]:
                 "zones_tint": _zones_tint(sensors),
                 "readings": list(sensors.values()),
                 "permits": list(permits.values()),
+                "detections": list(detections.values()),
             },
         }
         if baseline_fire:

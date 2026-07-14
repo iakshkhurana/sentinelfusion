@@ -127,6 +127,16 @@ uvicorn main:app --reload --port 8000
 cd apps/web && npm install && npm run dev
 ```
 
+### Verify
+
+```bash
+# Windows
+pwsh scripts/verify.ps1
+
+# Unix
+bash scripts/verify.sh
+```
+
 ---
 
 ## Evaluation focus

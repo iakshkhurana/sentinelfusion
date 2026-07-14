@@ -44,6 +44,12 @@ events:
     zone_id: zone_maintenance_bay
     adjacent_zone_ids: [zone_coke_oven]
     requester: contractor_alpha
+  - t: 300
+    type: cv
+    camera_id: cam_bay_n01
+    zone_id: zone_maintenance_bay
+    signal: hotspot_adjacent
+    confidence: 0.84
   - t: 420
     type: sensor
     tag_id: tag_gas_co_01

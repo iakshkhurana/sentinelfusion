@@ -33,9 +33,17 @@ def test_fusion_beats_baseline_before_incident(path: Path) -> None:
     crit = next(a for a in out["assessments"] if a.get("severity") == "critical")
     assert crit.get("citations"), f"{path.stem}: missing citations"
     assert all(c.get("next_step") for c in crit["citations"]), f"{path.stem}: citation missing next_step"
-    assert {a["agent"] for a in crit.get("agents") or []} == {"sensor", "permit", "ops"}
+    assert {a["agent"] for a in crit.get("agents") or []} == {
+        "sensor",
+        "permit",
+        "ops",
+        "vision",
+    }
     assert crit.get("ai", {}).get("ok") is True
     assert crit["ai"].get("summary")
+    if path.stem == "hot_work_gas_adjacent":
+        vision = next(a for a in crit["agents"] if a["agent"] == "vision")
+        assert vision["facts"], "hot_work scenario should include CV corroboration"
 
 
 def test_knowledge_corpus_loaded() -> None:
