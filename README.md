@@ -170,7 +170,7 @@ Demo / submit hand-off: [`docs/submit-checklist.md`](docs/submit-checklist.md) �
 
 ## Status
 
-**Demo-ready** — Compose boots API + twin; live WS with pause/scrub; agents + ML + citations; decision audit; HSE ask; eval harness green. Remaining human step: record the 90–120s video.
+**Code complete / submission-ready** — Compose, 4 scenarios (incl. SIMOPS), agents + ML + cites, scrub rail, emergency playbook, pytest + vitest. Remaining human step: record the 90–120s video (`docs/submit-checklist.md`).
 
 ---
 

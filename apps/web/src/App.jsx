@@ -1,74 +1,21 @@
 import { useEffect, useState, useRef } from "react";
 import PlantScene3D from "./PlantScene3D.jsx";
+import {
+  actionLabel,
+  computeLead,
+  fmt,
+  permitLabel,
+  playbookSteps,
+  scorePct,
+  wsUrl,
+  zoneTitle,
+} from "./demoLogic.js";
+import { onWsClosed, reduceRun, resetRun } from "./runState.js";
 
 async function getJson(path, init) {
   const res = await fetch(path, init);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
-}
-
-function wsUrl(scenarioId) {
-  const proto = window.location.protocol === "https:" ? "wss" : "ws";
-  return `${proto}://${window.location.host}/api/v1/ws/scenarios/${scenarioId}`;
-}
-
-function actionLabel(action) {
-  return {
-    block_permit: "Block permit",
-    escalate: "Escalate",
-    evacuate: "Evacuate",
-    alert: "Acknowledge",
-  }[action] || "Act";
-}
-
-/** Emergency playbook steps shown under every critical assessment (PRD F12). */
-function playbookSteps(action) {
-  return (
-    {
-      block_permit: [
-        ["Abort", "Stop the work front and withdraw crews from the hot zone"],
-        ["Notify", "Inform shift supervisor / control room of the compound hold"],
-        ["Preserve", "Keep the PTW blocked and freeze the evidence pack"],
-      ],
-      escalate: [
-        ["Abort", "Pause SIMOPS until the elevated atmosphere clears"],
-        ["Notify", "Escalate to area owner and HSE on-call"],
-        ["Preserve", "Hold permits in request and retain sensor traces"],
-      ],
-      evacuate: [
-        ["Abort", "Withdraw all personnel from the affected zones"],
-        ["Notify", "Activate emergency notification / muster"],
-        ["Preserve", "Secure valves/power as SOP; do not reset permits"],
-      ],
-      alert: [
-        ["Watch", "Increase monitoring frequency on the lit agents"],
-        ["Notify", "Brief the permit issuer before approving work"],
-        ["Preserve", "Keep the assessment trail attached to the PTW"],
-      ],
-    }[action] || [
-      ["Abort", "Hold work until compound risk clears"],
-      ["Notify", "Alert control room"],
-      ["Preserve", "Keep evidence attached to the decision"],
-    ]
-  );
-}
-
-function zoneTitle(id) {
-  return (id || "")
-    .replace(/^zone_/, "")
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function permitLabel(p) {
-  const kind = (p.permit_type || "permit").replaceAll("_", " ");
-  return `${kind} · ${zoneTitle(p.zone_id)} · ${p.status}`;
-}
-
-function scorePct(a) {
-  if (a?.model_score != null) return Math.round(a.model_score * 100);
-  if (a?.score != null) return Math.round(a.score * 100);
-  return null;
 }
 
 function RaceTrack({ fusion, baseline, incident }) {
@@ -253,23 +200,11 @@ function AssessmentCard({ a, metrics, deciding, decision, onDecide }) {
   );
 }
 
-function fmt(v, unit = "s") {
-  if (v == null) return "—";
-  return `@${v}${unit}`;
-}
-
 export default function App() {
   const [plant, setPlant] = useState(null);
   const [scenarios, setScenarios] = useState([]);
   const [scenarioId, setScenarioId] = useState("hot_work_gas_adjacent");
-  const [assessments, setAssessments] = useState([]);
-  const [metrics, setMetrics] = useState(null);
-  const [zonesTint, setZonesTint] = useState({});
-  const [permits, setPermits] = useState([]);
-  const [baselineFire, setBaselineFire] = useState(null);
-  const [tSec, setTSec] = useState(0);
-  const [status, setStatus] = useState("idle");
-  const [paused, setPaused] = useState(false);
+  const [run, setRun] = useState(() => resetRun("idle"));
   const [decision, setDecision] = useState(null);
   const [audit, setAudit] = useState([]);
   const [ask, setAsk] = useState("hot work near gas");
@@ -279,6 +214,17 @@ export default function App() {
   const [error, setError] = useState(null);
   const [nav, setNav] = useState("twin");
   const wsRef = useRef(null);
+
+  const {
+    assessments,
+    metrics,
+    zonesTint,
+    permits,
+    baselineFire,
+    tSec,
+    status,
+    paused,
+  } = run;
 
   useEffect(() => {
     Promise.all([
@@ -301,24 +247,14 @@ export default function App() {
     ["requested", "active"].includes(p.status),
   );
   const liveLabel = status === "running" ? (paused ? "Paused" : "Live") : status;
-  const lead =
-    critical && baselineFire && baselineFire.t_sec > critical.t_sec
-      ? baselineFire.t_sec - critical.t_sec
-      : metrics?.lead_time_sec;
+  const lead = computeLead(critical, baselineFire, metrics);
   const activeScenario = scenarios.find((s) => s.id === scenarioId);
   const durationSec = activeScenario?.duration_sec ?? 600;
 
   function onPlay() {
     setError(null);
-    setAssessments([]);
-    setMetrics(null);
     setDecision(null);
-    setZonesTint({});
-    setPermits([]);
-    setBaselineFire(null);
-    setTSec(0);
-    setPaused(false);
-    setStatus("running");
+    setRun(resetRun("running"));
     setNav("twin");
     wsRef.current?.close();
 
@@ -327,34 +263,14 @@ export default function App() {
 
     ws.onmessage = (ev) => {
       const msg = JSON.parse(ev.data);
-      if (msg.type === "twin.tick") {
-        setTSec(msg.payload.t_sec ?? 0);
-        setZonesTint(msg.payload.zones_tint || {});
-        setPermits(msg.payload.permits || []);
-      }
-      if (msg.type === "assessment.upsert") {
-        setAssessments((prev) => [msg.payload, ...prev]);
-      }
-      if (msg.type === "baseline.fire") {
-        setBaselineFire(msg.payload);
-      }
-      if (msg.type === "run.control") {
-        setPaused(msg.payload?.status === "paused");
-      }
-      if (msg.type === "run.done") {
-        setAssessments(msg.payload.assessments || []);
-        setMetrics(msg.payload.metrics || null);
-        setPaused(false);
-        setStatus("completed");
-      }
+      setRun((s) => reduceRun(s, msg));
     };
     ws.onerror = () => {
       setError("API unreachable — start uvicorn on :8000");
-      setStatus("error");
+      setRun((s) => ({ ...s, status: "error" }));
     };
     ws.onclose = () => {
-      setPaused(false);
-      setStatus((s) => (s === "running" ? "completed" : s));
+      setRun((s) => onWsClosed(s));
     };
   }
 

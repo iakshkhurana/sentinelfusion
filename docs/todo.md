@@ -2,6 +2,8 @@
 
 Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck.
 
+**Product code DoD: complete.** Remaining human step: record the demo video.
+
 ## Phase 0 — Foundations
 
 - [x] Agent docs + stack vibe (`docs/stack.md`) + ADRs 012–016 (WS, YAML, pipeline, AI provider, twin boot)  
@@ -11,7 +13,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] ≥3 YAML scenarios with ground-truth `incident_at_sec`  
 - [x] Stretch: multi-permit SIMOPS at shift handover (`simops_shift_handover`)  
 - [x] Pytest scenario eval harness (all packaged YAMLs) + health/run smoke  
-- [ ] Vitest + WS test helper (web)  
+- [x] Vitest + WS envelope reducer tests (`apps/web`)  
 
 ## Phase 0b — Brain spine stubs
 
@@ -52,36 +54,38 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] Live fusion-vs-baseline race strip (baseline.fire on twin)  
 - [x] Demo polish: AI mock brief + adjacency arcs (+ race/PTW)  
 - [x] Premium control-room shell UI (rail · KPIs · twin stage · ops)  
+- [x] Ops-grade assessment card (race track · agents · playbook · evidence)  
 
 ## Phase 5 — RAG (full, attached to actions)
 
 - [x] Corpus build (`packages/knowledge/excerpts.json` — illustrative)  
-- [ ] Embeddings + vector store  
-- [x] Alert-attached citations + “what to do now” (static corpus; vectors later)  
+- [x] Alert-attached citations + “what to do now” (static corpus keyword match)  
 - [x] Optional HSE ask with citations (`POST /knowledge/query`)  
+- [~] Embeddings + vector store — **deferred post-v1** (keyword corpus meets demo cites)  
 
 ## Phase 6 — DevOps + reliability
 
 - [x] Docker Compose (api + web; nginx proxies `/api` + WS)  
 - [x] API healthcheck + `.env.example`  
-- [x] Verify script (`scripts/verify.ps1` / `verify.sh`) — artifacts already in-repo  
-- [ ] Optional vector DB / redis when RAG is live  
+- [x] Verify script (`scripts/verify.ps1` / `verify.sh`)  
+- [~] Optional vector DB / redis — **deferred** with embeddings  
 
 ## Phase 7 — Demo package
 
 - [x] Architecture diagram (matches running system)  
 - [x] 90–120s demo script (`docs/demo-script.md`)  
 - [x] Deck outline (`docs/deck.md` → paste into Gamma/PPT)  
-- [ ] Recorded 90–120s demo video *(human — see `docs/submit-checklist.md`)*  
+- [ ] Recorded 90–120s demo video *(human only — `docs/submit-checklist.md`)*  
 - [x] README one-command path + proof table + eval report  
 - [x] Submit checklist (`docs/submit-checklist.md`)  
 
-## Stretch (if crushing it)
+## Stretch
 
 - [x] Simple CV stub (vision agent + `cv` events; corroborates, does not sole-force)  
-- [ ] Neo4j equipment–permit–hazard graph view  
-- [ ] Multi-plant config packs  
+- [x] Multi-permit SIMOPS scenario (`simops_shift_handover`)  
+- [~] Neo4j equipment–permit–hazard graph — **deferred post-v1**  
+- [~] Multi-plant config packs — **deferred post-v1**  
 
 ## Definition of done
 
-Stranger runs Compose → plays scenario → baseline late → fusion CRITICAL early → permit blocked → cites + metrics. That is the bar.
+Stranger runs Compose → plays scenario → baseline late → fusion CRITICAL early → permit blocked → cites + metrics. **Met in code.**

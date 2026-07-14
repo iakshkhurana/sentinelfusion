@@ -33,8 +33,9 @@ Point: zone labels · Active PTW · Fusion CRITICAL first · Baseline late · Bl
 | Hot work + gas | @300s | @420s | **+180s** |
 | Confined + abnormal | @240s | @390s | **+180s** |
 | Maint on gas path | @270s | @420s | **+180s** |
+| Multi-permit SIMOPS handover | @210s | @330s | **+210s** |
 
-Eval harness: `cd apps/api && python -m pytest -q`
+Eval: `cd apps/api && python -m pytest -q` · Web: `cd apps/web && npm test`
 
 ## 7 — Architecture
 API (FastAPI) · Three.js twin · YAML packs · compound model artifact · Compose one-command  

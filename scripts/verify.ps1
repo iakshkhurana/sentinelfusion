@@ -15,6 +15,11 @@ Push-Location apps/api
 python -m pytest -q
 Pop-Location
 
+Write-Host "== web vitest =="
+Push-Location apps/web
+npm test
+Pop-Location
+
 Write-Host "== eval report =="
 python scripts/eval_report.py
 Write-Host "verify ok"

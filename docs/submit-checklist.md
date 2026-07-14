@@ -15,11 +15,11 @@ Follow [`docs/demo-script.md`](demo-script.md) beat-for-beat.
 
 Suggested clicks:
 
-1. Scenario: **Hot work beside rising CO**
-2. **Run** → optional **Skip ahead** → **Pause** on CRITICAL
-3. Point: zone labels · Active PTW · vision pill · race strip · adjacency arc
-4. **Resume** → proof metrics → citation **Now** → **Block permit** → audit line
-5. Optional: **HSE ask** `hot work near gas`
+1. Scenario: **Hot work beside rising CO** (or SIMOPS handover for dual PTW)
+2. **Run** → scrub / **Skip ahead** → **Pause** on CRITICAL
+3. Point: zone labels · Active PTW · agent grid · race strip · emergency playbook
+4. **Resume** → proof / FN KPI → citation **Now** → **Block permit** → audit
+5. Optional: **Knowledge** ask `hot work near gas`
 
 Export 1080p; no hackathon branding in title card — product name only.
 

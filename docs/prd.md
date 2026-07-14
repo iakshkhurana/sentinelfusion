@@ -54,7 +54,7 @@ App launches on **Digital Twin · Demo Mode** with Assessment panel + Decision f
 | F9 | Scenario replay, scrub, A/B baseline toggle | P0 |
 | F10 | Metrics dashboard: lead time, FN, precision | P0 |
 | F11 | Optional free-form compliance chat | P1 |
-| F12 | Emergency playbook (evacuate / notify / preserve) | P1 |
+| F12 | Emergency playbook (evacuate / notify / preserve) | P1 ✅ |
 | F13 | Docker Compose production-like demo | P0 |
 
 ## Compound risk library (minimum 3)

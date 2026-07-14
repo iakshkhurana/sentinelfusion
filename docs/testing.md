@@ -9,7 +9,7 @@ A task is **not done** until the checks below that apply to the change are green
 cd apps/api && python -m pytest -q
 
 # Web
-cd apps/web && pnpm test
+cd apps/web && npm test
 
 # ML unit / training smoke
 cd apps/ml && uv run pytest -q
