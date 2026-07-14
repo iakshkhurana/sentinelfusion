@@ -541,6 +541,30 @@ body,
   line-height: 1.4;
 }
 
+.agent-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+}
+
+.agent-pill {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--mute);
+}
+
+.agent-pill.lit {
+  border-color: rgba(94, 196, 168, 0.45);
+  color: var(--teal-bright);
+  background: rgba(61, 143, 122, 0.12);
+}
+
 .permit-ids {
   margin: 0.4rem 0 0;
   font-family: var(--mono);

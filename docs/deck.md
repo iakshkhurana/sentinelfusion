@@ -19,7 +19,7 @@ Not another SOP chatbot.
 A **watchable plant twin** that fuses streams → compound assessment → **decision** (block / escalate) with citations and **lead-time proof** vs single-sensor baseline.
 
 ## 4 — How it works
-YAML scenario → context / facts → **rules + ML** → WebSocket twin  
+YAML → **sensor / permit / ops agents** → coordinator (**rules + ML**) → WebSocket twin  
 Baseline path runs in parallel for A/B proof.  
 Citations attach “what to do now.”
 

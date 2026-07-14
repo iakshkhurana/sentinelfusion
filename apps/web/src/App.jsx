@@ -276,6 +276,19 @@ export default function App() {
                     {a.model_score != null ? `${(a.model_score * 100).toFixed(0)}%` : "—"}
                   </span>
                 </div>
+                {a.agents?.length > 0 && (
+                  <div className="agent-row">
+                    {a.agents.map((ag) => (
+                      <span
+                        key={ag.agent}
+                        className={`agent-pill ${ag.facts?.length ? "lit" : ""}`}
+                        title={(ag.facts || []).map((f) => f.label).join(" · ") || "quiet"}
+                      >
+                        {ag.agent}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <ul>
                   {a.factors?.slice(0, 3).map((f) => (
                     <li key={f.code}>{f.label}</li>

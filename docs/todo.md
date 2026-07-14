@@ -38,10 +38,10 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 ## Phase 3 — Agents + orchestrator
 
-- [ ] Sensor / Permit / Ops agents as real modules  
-- [ ] Fusion coordinator (LangGraph or clean pipeline)  
-- [ ] Action playbooks: alert · block permit · escalate · evidence  
-- [ ] Audit log of recommendations  
+- [x] Sensor / Permit / Ops agents as real modules (`apps/api/agents/`)  
+- [x] Fusion coordinator (clean pipeline; LangGraph later if needed)  
+- [x] Action playbooks: alert · block permit · escalate · evidence  
+- [ ] Audit log UI for `/api/v1/decisions`  
 
 ## Phase 4 — Frontend product
 

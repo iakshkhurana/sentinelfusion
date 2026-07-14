@@ -10,7 +10,12 @@ Full stack vibe: [`docs/stack.md`](stack.md)
 flowchart LR
   YAML[packages/scenarios YAML] --> Engine[apps/api engine replay]
   Engine --> Baseline[Single-sensor baseline]
-  Engine --> Fusion[Rules + ML compound scorer]
+  Engine --> SensorA[Sensor agent]
+  Engine --> PermitA[Permit agent]
+  Engine --> OpsA[Ops agent]
+  SensorA --> Fusion[Coordinator: rules + ML]
+  PermitA --> Fusion
+  OpsA --> Fusion
   Fusion --> Cite[Citation attach]
   Engine -->|WebSocket ticks| Twin[React Three.js twin]
   Fusion -->|assessments + metrics| Panel[Assessment panel]
