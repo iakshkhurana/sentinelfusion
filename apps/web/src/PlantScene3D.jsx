@@ -29,8 +29,8 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId, gasZone
     const h = el.clientHeight || window.innerHeight;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0c1016);
-    scene.fog = new THREE.Fog(0x0c1016, 28, 55);
+    scene.background = new THREE.Color(0x0a0e13);
+    scene.fog = new THREE.Fog(0x0a0e13, 26, 52);
 
     const camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 120);
     camera.position.set(22, 18, 22);

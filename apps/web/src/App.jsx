@@ -33,6 +33,11 @@ function permitLabel(p) {
   return `${kind} · ${zoneTitle(p.zone_id)} · ${p.status}`;
 }
 
+function fmt(v, unit = "s") {
+  if (v == null) return "—";
+  return `@${v}${unit}`;
+}
+
 export default function App() {
   const [plant, setPlant] = useState(null);
   const [scenarios, setScenarios] = useState([]);
@@ -52,6 +57,7 @@ export default function App() {
   const [asking, setAsking] = useState(false);
   const [deciding, setDeciding] = useState(false);
   const [error, setError] = useState(null);
+  const [nav, setNav] = useState("twin");
   const wsRef = useRef(null);
 
   useEffect(() => {
@@ -74,6 +80,11 @@ export default function App() {
   const livePermits = permits.filter((p) =>
     ["requested", "active"].includes(p.status),
   );
+  const liveLabel = status === "running" ? (paused ? "Paused" : "Live") : status;
+  const lead =
+    critical && baselineFire && baselineFire.t_sec > critical.t_sec
+      ? baselineFire.t_sec - critical.t_sec
+      : metrics?.lead_time_sec;
 
   function onPlay() {
     setError(null);
@@ -86,6 +97,7 @@ export default function App() {
     setTSec(0);
     setPaused(false);
     setStatus("running");
+    setNav("twin");
     wsRef.current?.close();
 
     const ws = new WebSocket(wsUrl(scenarioId));
@@ -127,8 +139,7 @@ export default function App() {
   function onPauseToggle() {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    const command = paused ? "resume" : "pause";
-    ws.send(JSON.stringify({ type: "control", command }));
+    ws.send(JSON.stringify({ type: "control", command: paused ? "resume" : "pause" }));
   }
 
   function onSkipAhead() {
@@ -136,9 +147,13 @@ export default function App() {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     const sc = scenarios.find((s) => s.id === scenarioId);
     const incident = sc?.incident_at_sec ?? 480;
-    // land ~3 minutes before ground-truth incident so fusion still plays live
-    const atSec = Math.max(0, incident - 200);
-    ws.send(JSON.stringify({ type: "control", command: "scrub", at_sec: atSec }));
+    ws.send(
+      JSON.stringify({
+        type: "control",
+        command: "scrub",
+        at_sec: Math.max(0, incident - 200),
+      }),
+    );
   }
 
   async function onAsk(e) {
@@ -171,8 +186,7 @@ export default function App() {
         }),
       });
       setDecision(out);
-      const log = await getJson("/api/v1/decisions");
-      setAudit(log);
+      setAudit(await getJson("/api/v1/decisions"));
     } catch (e) {
       setError(e.message);
     } finally {
@@ -181,31 +195,55 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <div className="viewport">
-        {plant ? (
-          <PlantScene3D
-            plant={plant}
-            zonesTint={zonesTint}
-            criticalZoneId={critical?.zone_id}
-            gasZoneIds={critical?.gas_zone_ids || []}
-          />
-        ) : (
-          <div className="loading">Loading plant layout…</div>
-        )}
+    <div className="shell">
+      <aside className="rail">
+        <div className="rail-brand">
+          <span className="brand-mark" aria-hidden />
+          <div>
+            <strong>SentinelFusion</strong>
+            <small>Control room</small>
+          </div>
+        </div>
 
-        <div className="hud-top">
-          <div className="brand">
-            <span className="mark" />
-            <div>
-              <strong>SentinelFusion</strong>
-              <small>{plant?.name || "Plant twin"}</small>
-            </div>
+        <nav className="rail-nav">
+          {[
+            ["twin", "Twin"],
+            ["risk", "Risk"],
+            ["knowledge", "Knowledge"],
+            ["audit", "Audit"],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={nav === id ? "active" : ""}
+              onClick={() => setNav(id)}
+            >
+              <i className={`ico ${id}`} aria-hidden />
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="rail-foot">
+          <span className={`pulse ${status} ${paused ? "paused" : ""}`} />
+          <div>
+            <strong>{liveLabel}</strong>
+            <small>{plant?.name || "Loading site…"}</small>
+          </div>
+        </div>
+      </aside>
+
+      <main className="main">
+        <header className="topbar">
+          <div className="crumb">
+            <span>Operations</span>
+            <em>/</em>
+            <strong>Plant twin</strong>
           </div>
 
-          <div className="controls">
-            <label>
-              Scenario
+          <div className="top-actions">
+            <label className="field">
+              <span>Scenario</span>
               <select
                 value={scenarioId}
                 onChange={(e) => setScenarioId(e.target.value)}
@@ -218,236 +256,266 @@ export default function App() {
                 ))}
               </select>
             </label>
-            <button type="button" className="btn-primary" onClick={onPlay} disabled={status === "running"}>
-              {status === "running" ? "Running…" : "Run scenario"}
+            <button type="button" className="btn-run" onClick={onPlay} disabled={status === "running"}>
+              {status === "running" ? "Streaming" : "Run scenario"}
             </button>
             {status === "running" && (
               <>
-                <button type="button" className="btn-ghost" onClick={onPauseToggle}>
+                <button type="button" className="btn-quiet" onClick={onPauseToggle}>
                   {paused ? "Resume" : "Pause"}
                 </button>
-                <button type="button" className="btn-ghost" onClick={onSkipAhead} disabled={paused}>
+                <button type="button" className="btn-quiet" onClick={onSkipAhead} disabled={paused}>
                   Skip ahead
                 </button>
               </>
             )}
           </div>
 
-          <div className="status-chip">
-            <span className={`dot ${status} ${paused ? "paused" : ""}`} />
-            <span>
-              {status === "running" ? (paused ? "PAUSED" : "LIVE") : status.toUpperCase()}
-            </span>
-            <span className="t">{tSec}s</span>
+          <div className="clock">
+            <span>T+</span>
+            <b>{tSec}s</b>
           </div>
-        </div>
-
-        {livePermits.length > 0 && (
-          <div className="ptw-strip">
-            <span className="ptw-label">Active PTW</span>
-            {livePermits.map((p) => (
-              <span key={p.id} className={`ptw-chip ${p.permit_type || ""}`}>
-                {permitLabel(p)}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="legend">
-          <span><i className="c-ok" /> Clear</span>
-          <span><i className="c-warn" /> Elevated</span>
-          <span><i className="c-crit" /> Critical</span>
-        </div>
-
-        {critical && (
-          <div className="hot-chip">
-            <span>Hot zone</span>
-            <strong>{zoneTitle(critical.zone_id)}</strong>
-            <em>{critical.severity}</em>
-          </div>
-        )}
-
-        {(critical || baselineFire) && (
-          <div className="race">
-            <div className={`race-lane ${critical ? "on" : ""}`}>
-              <span>Fusion</span>
-              <strong>{critical ? `CRITICAL @${critical.t_sec}s` : "watching…"}</strong>
-            </div>
-            <div className={`race-lane baseline ${baselineFire ? "on late" : ""}`}>
-              <span>Baseline</span>
-              <strong>
-                {baselineFire
-                  ? `sensor fire @${baselineFire.t_sec}s`
-                  : critical
-                    ? "still silent"
-                    : "watching…"}
-              </strong>
-            </div>
-            {critical && baselineFire && baselineFire.t_sec > critical.t_sec && (
-              <p className="race-win">
-                Fusion led by {baselineFire.t_sec - critical.t_sec}s
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      <aside className="panel">
-        <header>
-          <h1>Assessment</h1>
-          <p>Compound risk vs single-sensor baseline</p>
         </header>
 
-        {metrics && (
-          <section className="proof">
-            <p className="proof-line">
-              Fusion critical at <b>@{metrics.fusion_first_critical_sec ?? "—"}s</b>
-              {" · "}
-              baseline{" "}
-              {metrics.baseline_first_fire_sec == null
-                ? "missed"
-                : `fired @${metrics.baseline_first_fire_sec}s`}
-              {" · "}
-              <span className="lead">+{metrics.lead_time_sec ?? "—"}s lead</span>
-            </p>
-            <div className="metrics">
-              <div>
-                <small>Fusion first</small>
-                <b>@{metrics.fusion_first_critical_sec ?? "—"}s</b>
-              </div>
-              <div>
-                <small>Baseline</small>
-                <b>@{metrics.baseline_first_fire_sec ?? "—"}s</b>
-              </div>
-              <div>
-                <small>Lead time</small>
-                <b className="lead">{metrics.lead_time_sec ?? "—"}s</b>
-              </div>
+        <section className="kpis">
+          <article>
+            <small>Fusion critical</small>
+            <b>{fmt(metrics?.fusion_first_critical_sec ?? critical?.t_sec)}</b>
+            <em>{critical ? "compound path" : "awaiting run"}</em>
+          </article>
+          <article>
+            <small>Baseline fire</small>
+            <b>{fmt(metrics?.baseline_first_fire_sec ?? baselineFire?.t_sec)}</b>
+            <em>{baselineFire || metrics?.baseline_first_fire_sec != null ? "single-sensor" : "still silent"}</em>
+          </article>
+          <article className="accent">
+            <small>Lead time</small>
+            <b>{lead != null ? `+${lead}s` : "—"}</b>
+            <em>fusion advantage</em>
+          </article>
+          <article>
+            <small>Active PTW</small>
+            <b>{livePermits.length}</b>
+            <em>{livePermits[0] ? permitLabel(livePermits[0]) : "none live"}</em>
+          </article>
+        </section>
+
+        <section className="stage">
+          <div className="twin-frame">
+            <div className="twin-aura" aria-hidden />
+            {plant ? (
+              <PlantScene3D
+                plant={plant}
+                zonesTint={zonesTint}
+                criticalZoneId={critical?.zone_id}
+                gasZoneIds={critical?.gas_zone_ids || []}
+              />
+            ) : (
+              <div className="loading">Building twin…</div>
+            )}
+
+            <div className="overlay-top">
+              {livePermits.map((p) => (
+                <span key={p.id} className={`chip ptw ${p.permit_type || ""}`}>
+                  {permitLabel(p)}
+                </span>
+              ))}
             </div>
-          </section>
-        )}
 
-        <div className="feed">
-          {assessments.length === 0 && !decision && (
-            <p className="empty">
-              Select a scenario and run it. Zones and PTWs update live — then act from this panel.
-            </p>
-          )}
+            {critical && (
+              <div className="hot-card">
+                <span>Hot zone</span>
+                <strong>{zoneTitle(critical.zone_id)}</strong>
+                <em>{critical.severity}</em>
+              </div>
+            )}
 
-          {assessments.map((a) => {
-            const cite = a.citations?.[0];
-            return (
-              <article key={a.id || a.title} className={`card ${a.severity}`}>
-                <div className="card-head">
-                  <h2>{a.title}</h2>
-                  <span className="score">
-                    {a.model_score != null ? `${(a.model_score * 100).toFixed(0)}%` : "—"}
-                  </span>
+            {(critical || baselineFire) && (
+              <div className="race-card">
+                <div className={`lane ${critical ? "on" : ""}`}>
+                  <span>Fusion</span>
+                  <b>{critical ? `CRITICAL @${critical.t_sec}s` : "watching"}</b>
                 </div>
-                {a.agents?.length > 0 && (
-                  <div className="agent-row">
-                    {a.agents.map((ag) => (
-                      <span
-                        key={ag.agent}
-                        className={`agent-pill ${ag.facts?.length ? "lit" : ""}`}
-                        title={(ag.facts || []).map((f) => f.label).join(" · ") || "quiet"}
-                      >
-                        {ag.agent}
-                      </span>
-                    ))}
-                  </div>
+                <div className={`lane base ${baselineFire ? "on" : ""}`}>
+                  <span>Baseline</span>
+                  <b>
+                    {baselineFire
+                      ? `fire @${baselineFire.t_sec}s`
+                      : critical
+                        ? "still silent"
+                        : "watching"}
+                  </b>
+                </div>
+                {lead != null && critical && baselineFire && (
+                  <p>Fusion led by {lead}s</p>
                 )}
-                {a.ai?.summary && (
-                  <p className="ai-brief">
-                    <span>{a.ai.provider}</span>
-                    {a.ai.summary}
+              </div>
+            )}
+
+            <div className="legend">
+              <span><i className="ok" /> Clear</span>
+              <span><i className="warn" /> Elevated</span>
+              <span><i className="crit" /> Critical</span>
+            </div>
+          </div>
+
+          <aside className={`ops ${nav}`}>
+            <header className="ops-head">
+              <div>
+                <h1>
+                  {nav === "knowledge" ? "HSE knowledge" : nav === "audit" ? "Decision audit" : "Assessment"}
+                </h1>
+                <p>
+                  {nav === "knowledge"
+                    ? "Curated industrial guidance"
+                    : nav === "audit"
+                      ? "Executed actions this session"
+                      : "Compound risk vs single-sensor baseline"}
+                </p>
+              </div>
+            </header>
+
+            {(nav === "twin" || nav === "risk") && (
+              <div className="ops-body">
+                {metrics && (
+                  <p className="proof">
+                    Fusion <b>{fmt(metrics.fusion_first_critical_sec)}</b>
+                    {" · "}
+                    baseline{" "}
+                    {metrics.baseline_first_fire_sec == null
+                      ? "missed"
+                      : fmt(metrics.baseline_first_fire_sec)}
+                    {" · "}
+                    <span>+{metrics.lead_time_sec ?? "—"}s lead</span>
                   </p>
                 )}
-                <ul>
-                  {a.factors?.slice(0, 3).map((f) => (
-                    <li key={f.code}>{f.label}</li>
-                  ))}
-                </ul>
-                {a.related_permit_ids?.length > 0 && (
-                  <p className="permit-ids">PTW: {a.related_permit_ids.join(", ")}</p>
+
+                {assessments.length === 0 && !decision && (
+                  <p className="empty">
+                    Run a scenario. The twin lights zones and agents; decide from here.
+                  </p>
                 )}
-                {cite && (
-                  <div className="evidence">
-                    <p className="cite">{cite.source}</p>
-                    {cite.excerpt && <p className="excerpt">{cite.excerpt}</p>}
-                    {cite.next_step && (
-                      <p className="next-step">
-                        <span>Now</span> {cite.next_step}
-                      </p>
+
+                {assessments.map((a) => {
+                  const cite = a.citations?.[0];
+                  return (
+                    <article key={a.id || a.title} className={`ticket ${a.severity}`}>
+                      <div className="ticket-top">
+                        <h2>{a.title}</h2>
+                        <span>
+                          {a.model_score != null ? `${(a.model_score * 100).toFixed(0)}%` : "—"}
+                        </span>
+                      </div>
+                      {a.agents?.length > 0 && (
+                        <div className="agents">
+                          {a.agents.map((ag) => (
+                            <span
+                              key={ag.agent}
+                              className={ag.facts?.length ? "lit" : ""}
+                              title={(ag.facts || []).map((f) => f.label).join(" · ") || "quiet"}
+                            >
+                              {ag.agent}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {a.ai?.summary && (
+                        <p className="brief">
+                          <span>{a.ai.provider}</span>
+                          {a.ai.summary}
+                        </p>
+                      )}
+                      <ul>
+                        {a.factors?.slice(0, 3).map((f) => (
+                          <li key={f.code}>{f.label}</li>
+                        ))}
+                      </ul>
+                      {a.related_permit_ids?.length > 0 && (
+                        <p className="meta">PTW {a.related_permit_ids.join(", ")}</p>
+                      )}
+                      {cite && (
+                        <div className="evidence">
+                          <p className="src">{cite.source}</p>
+                          {cite.excerpt && <p>{cite.excerpt}</p>}
+                          {cite.next_step && (
+                            <p className="now">
+                              <span>Now</span> {cite.next_step}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {a.id && (
+                        <button
+                          type="button"
+                          className="btn-act"
+                          disabled={deciding || decision?.assessment_id === a.id}
+                          onClick={() => onDecide(a)}
+                        >
+                          {decision?.assessment_id === a.id
+                            ? "Executed"
+                            : actionLabel(a.recommended_action)}
+                        </button>
+                      )}
+                    </article>
+                  );
+                })}
+
+                {decision && (
+                  <article className="ticket ok">
+                    <div className="ticket-top">
+                      <h2>{decision.message}</h2>
+                      <span>OK</span>
+                    </div>
+                  </article>
+                )}
+              </div>
+            )}
+
+            {nav === "knowledge" && (
+              <div className="ops-body">
+                <form onSubmit={onAsk} className="ask">
+                  <input
+                    value={ask}
+                    onChange={(e) => setAsk(e.target.value)}
+                    placeholder="Ask about hot work, gas, confined space…"
+                  />
+                  <button type="submit" disabled={asking || !ask.trim()}>
+                    {asking ? "…" : "Ask"}
+                  </button>
+                </form>
+                {knowledge && (
+                  <div className="ask-out">
+                    <p>{knowledge.answer}</p>
+                    {knowledge.citations?.[0] && (
+                      <small>{knowledge.citations[0].source}</small>
                     )}
                   </div>
                 )}
-                {a.id && (
-                  <button
-                    type="button"
-                    className="btn-act"
-                    disabled={deciding || decision?.assessment_id === a.id}
-                    onClick={() => onDecide(a)}
-                  >
-                    {decision?.assessment_id === a.id ? "Executed" : actionLabel(a.recommended_action)}
-                  </button>
-                )}
-              </article>
-            );
-          })}
-
-          {decision && (
-            <article className="card ok">
-              <div className="card-head">
-                <h2>{decision.message}</h2>
-                <span className="score">OK</span>
               </div>
-              {decision.blocked_permit_ids?.length > 0 && (
-                <p className="permit-ids">Blocked: {decision.blocked_permit_ids.join(", ")}</p>
-              )}
-            </article>
-          )}
+            )}
 
-          <section className="hse">
-            <h3>HSE ask</h3>
-            <form onSubmit={onAsk} className="hse-form">
-              <input
-                value={ask}
-                onChange={(e) => setAsk(e.target.value)}
-                placeholder="e.g. hot work near gas"
-              />
-              <button type="submit" disabled={asking || !ask.trim()}>
-                {asking ? "…" : "Ask"}
-              </button>
-            </form>
-            {knowledge && (
-              <div className="hse-answer">
-                <p>{knowledge.answer}</p>
-                {knowledge.citations?.[0] && (
-                  <small>{knowledge.citations[0].source}</small>
+            {nav === "audit" && (
+              <div className="ops-body">
+                {audit.length === 0 ? (
+                  <p className="empty">No decisions yet — block or escalate from Risk.</p>
+                ) : (
+                  <ul className="audit-list">
+                    {audit.slice(0, 8).map((d) => (
+                      <li key={d.id}>
+                        <span>{d.action}</span>
+                        <p>{d.message}</p>
+                        <time>{(d.ts || "").replace("T", " ").slice(0, 19)}</time>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             )}
-          </section>
 
-          {audit.length > 0 && (
-            <section className="audit">
-              <h3>Decision audit</h3>
-              <ul>
-                {audit.slice(0, 6).map((d) => (
-                  <li key={d.id}>
-                    <span className="audit-action">{d.action}</span>
-                    <span>{d.message}</span>
-                    <time>{(d.ts || "").replace("T", " ").slice(0, 19)}</time>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </div>
-
-        {error && <p className="error">{error}</p>}
-      </aside>
+            {error && <p className="error">{error}</p>}
+          </aside>
+        </section>
+      </main>
     </div>
   );
 }

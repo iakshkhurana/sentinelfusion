@@ -48,6 +48,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] Baseline vs fusion comparison strip (proof line + metrics)  
 - [x] Live fusion-vs-baseline race strip (baseline.fire on twin)  
 - [x] Demo polish: AI mock brief + adjacency arcs (+ race/PTW)  
+- [x] Premium control-room shell UI (rail · KPIs · twin stage · ops)  
 
 ## Phase 5 — RAG (full, attached to actions)
 
