@@ -1,0 +1,145 @@
+# SentinelFusion
+
+**Industrial safety intelligence that catches compound risk before a single sensor would.**
+
+SentinelFusion is a plant Digital Twin for zero-harm operations. It fuses live process signals, permit-to-work activity, maintenance context, and shift windows into a continuous assessment — then drives a clear decision path when combinations become lethal.
+
+> Data was always there. Coordination was not. SentinelFusion is the missing intelligence layer.
+
+---
+
+## The problem
+
+Heavy industry runs on sensors, SCADA, and permits — yet fatal incidents still emerge from **co-occurring conditions** no individual alarm owns. A gas trend below threshold. A hot-work permit next door. A confined-space entry at shift change. Each system stays green. Together, they write the incident report.
+
+SentinelFusion exists to close that gap: detect the combination, show it on the plant, decide in time, and leave an auditable trail.
+
+---
+
+## What it does
+
+| Capability | Outcome |
+|------------|---------|
+| **Digital Twin (Demo Mode)** | A living plant view — zones, heat, active permits — as the home screen |
+| **Derived facts** | Stable truth extracted from noisy multi-stream events |
+| **Compound assessment** | Risk scored from co-occurrence, not single-tag thresholds alone |
+| **Decision flow** | Recommend → confirm → execute (block unsafe work, escalate, evacuate with gates) |
+| **Baseline proof** | Side-by-side lead time and false-negative reduction vs single-sensor alarms |
+| **Regulatory grounding** | Citations from curated industrial guidance attached to critical assessments |
+
+---
+
+## How the brain works
+
+```text
+Plant events  →  Context  →  Derived facts  →  Assessment  →  Decision
+                     │                              │
+                     └──────── live twin UI ────────┘
+```
+
+Every critical path is explainable: which facts fired, which factors weighed, which action is recommended, and which guidance supports it.
+
+---
+
+## Product principles
+
+- **Combinations over silos** — the unit of safety is the co-occurrence, not the tag  
+- **Spatial by default** — risk without a place on the plant is incomplete  
+- **Decisions, not dashboards** — assessment exists to force a next step  
+- **Fail visibly** — AI and automation never fail quietly  
+- **Prove it** — every demo story ends in measurable lead time  
+
+---
+
+## Architecture (summary)
+
+| Surface | Role |
+|---------|------|
+| API | Scenario runs, assessments, decisions, health |
+| Twin | Real-time plant state over a live channel |
+| Simulator | Scripted industrial chronologies for demos and eval |
+| Intelligence | Assessment scoring with hard safety guardrails |
+| Knowledge | Retrieval-backed citations on critical outcomes |
+| Console | Digital Twin · Assessment · Decision |
+
+Detailed design lives in [`docs/`](docs/).
+
+---
+
+## Repository
+
+```text
+apps/           # API, web console, ML artifacts
+packages/       # Scenarios and shared plant packs
+docs/           # Product, architecture, contracts, ADRs
+```
+
+| Doc | Purpose |
+|-----|---------|
+| [`docs/overview.md`](docs/overview.md) | Product overview |
+| [`docs/stack.md`](docs/stack.md) | Engineering shape |
+| [`docs/architecture.md`](docs/architecture.md) | System design |
+| [`docs/prd.md`](docs/prd.md) | Requirements |
+| [`docs/api.md`](docs/api.md) | API contracts |
+| [`docs/data-model.md`](docs/data-model.md) | Canonical types |
+| [`docs/decisions.md`](docs/decisions.md) | Architecture decisions |
+| [`docs/todo.md`](docs/todo.md) | Build roadmap |
+
+---
+
+## Quick start
+
+> Scaffolding lands in Phase 0. Target experience:
+
+```bash
+# clone
+git clone <repo-url> && cd et-ai
+
+# run the stack
+docker compose up --build
+
+# open the twin
+# web  → http://localhost:5173
+# api  → http://localhost:8000/api/v1/health
+# docs → http://localhost:8000/docs
+```
+
+One plant. One scenario. Play — and watch assessment beat a naïve baseline.
+
+---
+
+## Evaluation focus
+
+Aligned with industrial safety outcomes that matter in the field:
+
+- Compound detection vs single-sensor baselines  
+- Prediction lead time before incident threshold  
+- False-negative rate reduction  
+- Geospatial evidence quality  
+- Regulatory citation relevance  
+
+---
+
+## Status
+
+**Design freeze in progress** — product docs, contracts, and architecture decision records are in place. Implementation follows [`docs/todo.md`](docs/todo.md).
+
+---
+
+## Hackathon
+
+Built for **ET AI Hackathon 2026** — Problem Statement 1:  
+*AI-Powered Industrial Safety Intelligence for Zero-Harm Operations.*
+
+---
+
+## License
+
+Proprietary for the duration of the hackathon unless otherwise stated by the team.
+
+---
+
+<p align="center">
+  <strong>SentinelFusion</strong><br/>
+  See the combination. Decide before the siren.
+</p>

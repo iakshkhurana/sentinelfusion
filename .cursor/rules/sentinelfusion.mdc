@@ -1,0 +1,32 @@
+---
+description: SentinelFusion north star, stack locks, doc sources of truth
+alwaysApply: true
+---
+
+# SentinelFusion
+
+Problem 1 industrial safety. Hero = **Digital Twin + assessment + decision (permit block)**, not SOP chat.
+
+## Read first
+
+| Topic | Doc |
+|-------|-----|
+| Stack vibe | `docs/stack.md` |
+| Conventions | `docs/conventions.md` |
+| ADRs | `docs/decisions.md` |
+| Types | `docs/data-model.md` |
+| REST + WS | `docs/api.md` |
+| Done | `docs/testing.md` |
+
+## Locked stack
+
+FastAPI · Postgres+pgvector · **WebSocket** · **YAML scenarios** · Context→Facts→Assessment→Decision SM · React Twin Demo Mode · AI `mock|openai|ollama` (structured, 1 retry, fail visibly) · ML+rules · `uv`/`pnpm` · Compose
+
+## Hard rules
+
+- Prefer names from data-model/api; update docs same change  
+- ML cannot downgrade rule-CRITICAL  
+- Evacuate needs confirm / awaiting_decision  
+- Never silent AI failure  
+- Boot UI on Digital Twin Demo Mode  
+- No secrets · testing.md before “done”
