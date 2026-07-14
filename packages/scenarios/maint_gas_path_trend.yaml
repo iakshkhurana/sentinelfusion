@@ -1,0 +1,65 @@
+id: maint_gas_path_trend
+title: Maintenance on gas path while CO trends up
+description: >
+  Header maintenance in progress while pipe-rack CO climbs — single alarm
+  still late; compound flags earlier.
+plant_id: steel_pack_v1
+duration_sec: 560
+incident_at_sec: 450
+events:
+  - t: 0
+    type: sensor
+    tag_id: tag_gas_co_rack
+    zone_id: zone_pipe_rack
+    metric: co_ppm
+    value: 15
+    unit: ppm
+  - t: 60
+    type: maintenance
+    id: wo_gh_779
+    asset_id: asset_gas_header_main
+    zone_id: zone_gas_holder
+    status: in_progress
+    title: Header flange inspection
+  - t: 120
+    type: sensor
+    tag_id: tag_gas_co_rack
+    zone_id: zone_pipe_rack
+    metric: co_ppm
+    value: 38
+    unit: ppm
+  - t: 210
+    type: permit
+    id: ptw_gen_220
+    permit_type: general
+    status: active
+    zone_id: zone_gas_holder
+    adjacent_zone_ids: [zone_pipe_rack]
+    asset_id: asset_gas_header_main
+    requester: maint_crew_3
+  - t: 270
+    type: sensor
+    tag_id: tag_gas_co_rack
+    zone_id: zone_pipe_rack
+    metric: co_ppm
+    value: 62
+    unit: ppm
+  - t: 360
+    type: sensor
+    tag_id: tag_gas_co_rack
+    zone_id: zone_pipe_rack
+    metric: co_ppm
+    value: 88
+    unit: ppm
+  - t: 420
+    type: sensor
+    tag_id: tag_gas_co_rack
+    zone_id: zone_pipe_rack
+    metric: co_ppm
+    value: 115
+    unit: ppm
+  - t: 450
+    type: incident
+    code: gas_release_during_maint
+    zone_id: zone_gas_holder
+    note: Release during header work with rising detectors

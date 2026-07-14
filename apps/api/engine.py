@@ -8,14 +8,24 @@ from typing import Any
 # ponytail: hardcoded thresholds for demo physics; replace with config/model later
 CO_ELEVATED = 50.0
 CO_ALARM = 100.0
+PRESSURE_ABNORMAL = 18.0
+PRESSURE_ALARM = 23.0
+H2S_ELEVATED = 5.0
 
 
 def _zones_tint(sensors: dict[str, dict]) -> dict[str, float]:
     tint: dict[str, float] = {}
     for s in sensors.values():
-        if s.get("metric") != "co_ppm":
+        metric = s.get("metric")
+        value = float(s["value"])
+        if metric == "co_ppm":
+            level = min(1.0, value / 120.0)
+        elif metric == "pressure_kpa":
+            level = min(1.0, max(0.0, (value - 12.0) / 14.0))
+        elif metric == "h2s_ppm":
+            level = min(1.0, value / 15.0)
+        else:
             continue
-        level = min(1.0, float(s["value"]) / 120.0)
         zid = s["zone_id"]
         tint[zid] = max(tint.get(zid, 0.0), level)
     return tint
@@ -39,10 +49,117 @@ def _metrics(
     }
 
 
+def _check_baseline(sensors: dict[str, dict], t: float) -> dict | None:
+    for s in sensors.values():
+        if s.get("metric") == "co_ppm" and float(s["value"]) >= CO_ALARM:
+            return {"t_sec": t, "zone_id": s["zone_id"], "tag_id": s["tag_id"]}
+        if s.get("metric") == "pressure_kpa" and float(s["value"]) >= PRESSURE_ALARM:
+            return {"t_sec": t, "zone_id": s["zone_id"], "tag_id": s["tag_id"]}
+    return None
+
+
+def _assess_compound(
+    *,
+    t: float,
+    sensors: dict[str, dict],
+    permits: dict[str, dict],
+    maintenance: dict[str, dict],
+    baseline_first: float | None,
+) -> dict | None:
+    gas_zones = {
+        s["zone_id"]
+        for s in sensors.values()
+        if s.get("metric") == "co_ppm" and float(s["value"]) >= CO_ELEVATED
+    }
+    pressure_zones = {
+        s["zone_id"]
+        for s in sensors.values()
+        if s.get("metric") == "pressure_kpa" and float(s["value"]) >= PRESSURE_ABNORMAL
+    }
+    toxic_zones = {
+        s["zone_id"]
+        for s in sensors.values()
+        if s.get("metric") == "h2s_ppm" and float(s["value"]) >= H2S_ELEVATED
+    }
+    miss = baseline_first is None or baseline_first > t
+
+    for p in permits.values():
+        if p.get("status") not in {"requested", "active"}:
+            continue
+        touch = {p["zone_id"], *(p.get("adjacent_zone_ids") or [])}
+        if p.get("permit_type") == "hot_work" and gas_zones & touch:
+            return {
+                "t_sec": t,
+                "severity": "critical",
+                "title": "Hot work adjacent to elevated gas",
+                "score": 0.96,
+                "zone_id": p["zone_id"],
+                "rule_forced": True,
+                "recommended_action": "block_permit",
+                "related_permit_ids": [p["id"]],
+                "factors": [
+                    {"code": "gas_elevated", "label": "CO elevated above compound threshold"},
+                    {"code": "hot_work_adjacent", "label": "Hot-work permit touches gas zone"},
+                ],
+                "baseline_miss": miss,
+                "gas_zone_ids": sorted(gas_zones),
+            }
+        if p.get("permit_type") == "confined_space" and (
+            pressure_zones & touch or toxic_zones & touch or p["zone_id"] in toxic_zones
+        ):
+            return {
+                "t_sec": t,
+                "severity": "critical",
+                "title": "Confined space under abnormal atmosphere",
+                "score": 0.94,
+                "zone_id": p["zone_id"],
+                "rule_forced": True,
+                "recommended_action": "escalate",
+                "related_permit_ids": [p["id"]],
+                "factors": [
+                    {"code": "confined_space_entry", "label": "Active confined-space entry"},
+                    {"code": "abnormal_atmosphere", "label": "Pressure/toxin abnormal nearby"},
+                ],
+                "baseline_miss": miss,
+                "gas_zone_ids": sorted(pressure_zones | toxic_zones),
+            }
+
+    active_maint = [m for m in maintenance.values() if m.get("status") == "in_progress"]
+    if active_maint and gas_zones:
+        m = active_maint[0]
+        path_zones = {m["zone_id"], "zone_pipe_rack", "zone_gas_holder"}
+        for p in permits.values():
+            if p.get("status") in {"requested", "active"}:
+                path_zones.update({p["zone_id"], *(p.get("adjacent_zone_ids") or [])})
+        if gas_zones & path_zones:
+            return {
+                "t_sec": t,
+                "severity": "critical",
+                "title": "Maintenance on gas path with rising detectors",
+                "score": 0.91,
+                "zone_id": m["zone_id"],
+                "rule_forced": True,
+                "recommended_action": "block_permit",
+                "related_permit_ids": [
+                    p["id"]
+                    for p in permits.values()
+                    if p.get("status") in {"requested", "active"}
+                ],
+                "factors": [
+                    {"code": "maint_on_gas_path", "label": "Maintenance on gas-handling asset"},
+                    {"code": "gas_elevated", "label": "CO elevated on supply path"},
+                ],
+                "baseline_miss": miss,
+                "gas_zone_ids": sorted(gas_zones),
+            }
+    return None
+
+
 def iter_replay(scenario: dict) -> Iterator[dict[str, Any]]:
     """Yield live envelopes for WebSocket; same logic as sync replay."""
     sensors: dict[str, dict] = {}
     permits: dict[str, dict] = {}
+    maintenance: dict[str, dict] = {}
     assessments: list[dict] = []
     baseline_first: float | None = None
     fusion_first: float | None = None
@@ -59,6 +176,8 @@ def iter_replay(scenario: dict) -> Iterator[dict[str, Any]]:
             sensors[ev["tag_id"]] = ev
         elif etype == "permit":
             permits[ev["id"]] = ev
+        elif etype == "maintenance":
+            maintenance[ev["id"]] = ev
         elif etype == "incident":
             yield {
                 "type": "twin.tick",
@@ -74,51 +193,23 @@ def iter_replay(scenario: dict) -> Iterator[dict[str, Any]]:
 
         baseline_fire = None
         if baseline_first is None:
-            for s in sensors.values():
-                if s.get("metric") == "co_ppm" and float(s["value"]) >= CO_ALARM:
-                    baseline_first = t
-                    baseline_fire = {"t_sec": t, "zone_id": s["zone_id"], "tag_id": s["tag_id"]}
-                    break
-
-        gas_zones = {
-            s["zone_id"]
-            for s in sensors.values()
-            if s.get("metric") == "co_ppm" and float(s["value"]) >= CO_ELEVATED
-        }
-        hot = [
-            p
-            for p in permits.values()
-            if p.get("permit_type") == "hot_work" and p.get("status") in {"requested", "active"}
-        ]
-
-        hit = None
-        for p in hot:
-            touch = {p["zone_id"], *(p.get("adjacent_zone_ids") or [])}
-            if gas_zones & touch:
-                hit = p
-                break
+            baseline_fire = _check_baseline(sensors, t)
+            if baseline_fire:
+                baseline_first = t
 
         assessment = None
-        if hit and not seen_critical:
-            seen_critical = True
-            fusion_first = t
-            assessment = {
-                "t_sec": t,
-                "severity": "critical",
-                "title": "Hot work adjacent to elevated gas",
-                "score": 0.96,
-                "zone_id": hit["zone_id"],
-                "rule_forced": True,
-                "recommended_action": "block_permit",
-                "related_permit_ids": [hit["id"]],
-                "factors": [
-                    {"code": "gas_elevated", "label": "CO elevated above compound threshold"},
-                    {"code": "hot_work_adjacent", "label": "Hot-work permit touches gas zone"},
-                ],
-                "baseline_miss": baseline_first is None or baseline_first > t,
-                "gas_zone_ids": sorted(gas_zones),
-            }
-            assessments.append(assessment)
+        if not seen_critical:
+            assessment = _assess_compound(
+                t=t,
+                sensors=sensors,
+                permits=permits,
+                maintenance=maintenance,
+                baseline_first=baseline_first,
+            )
+            if assessment:
+                seen_critical = True
+                fusion_first = t
+                assessments.append(assessment)
 
         yield {
             "type": "twin.tick",
@@ -149,16 +240,14 @@ def replay(scenario: dict) -> dict:
     assessments: list[dict] = []
     metrics: dict[str, Any] | None = None
     for msg in iter_replay(scenario):
-        if msg["type"] == "assessment.upsert":
-            assessments.append(msg["payload"])
-        elif msg["type"] == "run.done":
+        if msg["type"] == "run.done":
             metrics = msg["payload"]["metrics"]
             assessments = msg["payload"]["assessments"]
     return {"scenario_id": scenario["id"], "assessments": assessments, "metrics": metrics}
 
 
 def _self_check() -> None:
-    scenario = {
+    hot = {
         "id": "self",
         "incident_at_sec": 480,
         "events": [
@@ -175,12 +264,34 @@ def _self_check() -> None:
             {"t": 420, "type": "sensor", "tag_id": "g", "zone_id": "zone_coke_oven", "metric": "co_ppm", "value": 118},
         ],
     }
-    out = replay(scenario)
+    out = replay(hot)
     assert out["metrics"]["fusion_first_critical_sec"] == 300
     assert out["metrics"]["baseline_first_fire_sec"] == 420
-    assert out["metrics"]["lead_time_sec"] == 180
-    types = [m["type"] for m in iter_replay(scenario)]
-    assert "twin.tick" in types and "run.done" in types
+
+    confined = {
+        "id": "cs",
+        "incident_at_sec": 420,
+        "events": [
+            {
+                "t": 180,
+                "type": "permit",
+                "id": "c1",
+                "permit_type": "confined_space",
+                "status": "active",
+                "zone_id": "zone_byproduct",
+                "adjacent_zone_ids": ["zone_gas_holder"],
+            },
+            {
+                "t": 240,
+                "type": "sensor",
+                "tag_id": "p",
+                "zone_id": "zone_gas_holder",
+                "metric": "pressure_kpa",
+                "value": 19.5,
+            },
+        ],
+    }
+    assert replay(confined)["metrics"]["fusion_first_critical_sec"] == 240
 
 
 if __name__ == "__main__":

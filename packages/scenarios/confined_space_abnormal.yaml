@@ -1,0 +1,58 @@
+id: confined_space_abnormal
+title: Confined space during abnormal pressure
+description: >
+  Confined-space entry in the by-product plant while gas-holder pressure
+  goes abnormal — combination before a hard single-tag panic.
+plant_id: steel_pack_v1
+duration_sec: 540
+incident_at_sec: 420
+events:
+  - t: 0
+    type: sensor
+    tag_id: tag_pressure_gh_01
+    zone_id: zone_gas_holder
+    metric: pressure_kpa
+    value: 12.0
+    unit: kPa
+  - t: 120
+    type: sensor
+    tag_id: tag_pressure_gh_01
+    zone_id: zone_gas_holder
+    metric: pressure_kpa
+    value: 16.5
+    unit: kPa
+  - t: 180
+    type: permit
+    id: ptw_cs_0011
+    permit_type: confined_space
+    status: active
+    zone_id: zone_byproduct
+    adjacent_zone_ids: [zone_gas_holder]
+    asset_id: asset_confined_pit_b
+    requester: ops_team_b
+  - t: 240
+    type: sensor
+    tag_id: tag_pressure_gh_01
+    zone_id: zone_gas_holder
+    metric: pressure_kpa
+    value: 19.5
+    unit: kPa
+  - t: 330
+    type: sensor
+    tag_id: tag_gas_h2s_02
+    zone_id: zone_byproduct
+    metric: h2s_ppm
+    value: 8
+    unit: ppm
+  - t: 390
+    type: sensor
+    tag_id: tag_pressure_gh_01
+    zone_id: zone_gas_holder
+    metric: pressure_kpa
+    value: 24.0
+    unit: kPa
+  - t: 420
+    type: incident
+    code: confined_atmosphere_event
+    zone_id: zone_byproduct
+    note: Atmosphere event during active confined-space entry
