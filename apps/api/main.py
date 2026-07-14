@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from decisions import decide
 from engine import iter_replay, replay
+from scorer import model_ready
 
 app = FastAPI(title="SentinelFusion API", version="0.1.0")
 
@@ -58,8 +59,18 @@ def _remember(assessments: list[dict]) -> None:
 
 
 @app.get("/api/v1/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "version": "0.1.0"}
+def health() -> dict:
+    return {"status": "ok", "version": "0.1.0", "model_ready": model_ready()}
+
+
+@app.get("/api/v1/ml/model")
+def ml_model() -> dict:
+    from pathlib import Path
+    import json
+
+    metrics_path = Path(__file__).resolve().parents[1] / "ml" / "artifacts" / "metrics.json"
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8")) if metrics_path.is_file() else {}
+    return {"ready": model_ready(), "metrics": metrics}
 
 
 @app.get("/api/v1/plant/layout")

@@ -1,0 +1,10 @@
+{
+  "roc_auc": 0.9752659974519339,
+  "precision_critical": 0.9816326530612245,
+  "recall_critical": 0.9562624254473161,
+  "f1_critical": 0.9687814702920443,
+  "n_train": 6400,
+  "n_test": 1600,
+  "positive_rate": 0.314625,
+  "model": "HistGradientBoostingClassifier"
+}

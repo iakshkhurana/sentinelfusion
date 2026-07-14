@@ -211,6 +211,10 @@ export default function App() {
               <div className="meta">
                 <span>t={a.t_sec}s</span>
                 <span>{a.recommended_action?.replaceAll("_", " ")}</span>
+                {a.model_score != null && (
+                  <span>model {(a.model_score * 100).toFixed(0)}%</span>
+                )}
+                {a.rule_forced && <span>rule guard</span>}
                 {a.baseline_miss && <span>beats baseline</span>}
               </div>
               <ul>
@@ -218,6 +222,17 @@ export default function App() {
                   <li key={f.code}>{f.label}</li>
                 ))}
               </ul>
+              {a.citations?.length > 0 && (
+                <div className="cites">
+                  {a.citations.map((c) => (
+                    <blockquote key={c.code}>
+                      <strong>{c.source}</strong>
+                      <span>{c.excerpt}</span>
+                    </blockquote>
+                  ))}
+                </div>
+              )}
+
               {a.id && (
                 <div className="row" style={{ marginTop: "0.65rem", marginBottom: 0 }}>
                   <button

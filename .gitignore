@@ -28,8 +28,8 @@ apps/web/dist/
 Thumbs.db
 
 # ML / data
-apps/ml/artifacts/*.joblib
-!apps/ml/artifacts/.gitkeep
+# keep trained compound_risk.joblib tracked; ignore ad-hoc local dumps
+apps/ml/artifacts/_local/
 *.parquet
 
 # Logs
