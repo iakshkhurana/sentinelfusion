@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import PlantScene3D from "./PlantScene3D.jsx";
 
 async function getJson(path, init) {
   const res = await fetch(path, init);
@@ -15,19 +16,16 @@ function actionLabel(action) {
   return {
     block_permit: "Block permit",
     escalate: "Escalate",
-    evacuate: "Confirm evacuate",
+    evacuate: "Evacuate",
     alert: "Acknowledge",
-  }[action] || "Decide";
+  }[action] || "Act";
 }
 
-function zoneFill(zoneId, criticalZoneId, zonesTint, gasZones) {
-  if (zoneId === criticalZoneId) return "rgba(255, 90, 79, 0.72)";
-  const level = zonesTint[zoneId] ?? 0;
-  if (level > 0 || gasZones.has(zoneId)) {
-    const a = 0.28 + Math.max(level, gasZones.has(zoneId) ? 0.4 : 0) * 0.5;
-    return `rgba(230, 184, 77, ${a})`;
-  }
-  return "rgba(40, 70, 58, 0.55)";
+function zoneTitle(id) {
+  return (id || "")
+    .replace(/^zone_/, "")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function App() {
@@ -56,10 +54,6 @@ export default function App() {
   }, []);
 
   const critical = assessments[0] ?? null;
-  const gasZones = useMemo(
-    () => new Set(critical?.gas_zone_ids?.length ? critical.gas_zone_ids : []),
-    [critical],
-  );
 
   function onPlay() {
     setError(null);
@@ -90,23 +84,22 @@ export default function App() {
       }
     };
     ws.onerror = () => {
-      setError("WebSocket failed — is the API running?");
+      setError("API unreachable — start uvicorn on :8000");
       setStatus("error");
     };
-    ws.onclose = () => {
-      setStatus((s) => (s === "running" ? "completed" : s));
-    };
+    ws.onclose = () => setStatus((s) => (s === "running" ? "completed" : s));
   }
 
   async function onDecide(assessment) {
     setDeciding(true);
     setError(null);
     try {
-      const needsConfirm = assessment.recommended_action === "evacuate";
       const out = await getJson(`/api/v1/assessments/${assessment.id}/decide`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirm: needsConfirm ? true : false }),
+        body: JSON.stringify({
+          confirm: assessment.recommended_action === "evacuate",
+        }),
       });
       setDecision(out);
     } catch (e) {
@@ -118,154 +111,140 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="top">
-        <div>
-          <h1>SentinelFusion</h1>
-          <p>Digital Twin · Demo Mode · live</p>
-        </div>
-        <div className="pill">DEMO MODE</div>
-      </header>
+      <div className="viewport">
+        {plant ? (
+          <PlantScene3D
+            plant={plant}
+            zonesTint={zonesTint}
+            criticalZoneId={critical?.zone_id}
+          />
+        ) : (
+          <div className="loading">Loading plant layout…</div>
+        )}
 
-      <div className="grid">
-        <section className="panel">
-          <div className="row">
-            <select
-              value={scenarioId}
-              onChange={(e) => setScenarioId(e.target.value)}
-              disabled={status === "running"}
-            >
-              {scenarios.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.title}
-                </option>
-              ))}
-            </select>
-            <button
-              className="primary"
-              type="button"
-              onClick={onPlay}
-              disabled={status === "running"}
-            >
-              {status === "running" ? "Streaming…" : "Play scenario"}
+        <div className="hud-top">
+          <div className="brand">
+            <span className="mark" />
+            <div>
+              <strong>SentinelFusion</strong>
+              <small>{plant?.name || "Plant twin"}</small>
+            </div>
+          </div>
+
+          <div className="controls">
+            <label>
+              Scenario
+              <select
+                value={scenarioId}
+                onChange={(e) => setScenarioId(e.target.value)}
+                disabled={status === "running"}
+              >
+                {scenarios.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" className="btn-primary" onClick={onPlay} disabled={status === "running"}>
+              {status === "running" ? "Running…" : "Run scenario"}
             </button>
           </div>
 
-          <div className="meta">
-            <span>t = {tSec}s</span>
-            <span>status = {status}</span>
-            {metrics && (
-              <>
-                <span>fusion @ {metrics.fusion_first_critical_sec ?? "—"}s</span>
-                <span>baseline @ {metrics.baseline_first_fire_sec ?? "—"}s</span>
-                <span>lead {metrics.lead_time_sec ?? "—"}s</span>
-              </>
-            )}
+          <div className="status-chip">
+            <span className={`dot ${status}`} />
+            <span>{status === "running" ? "LIVE" : status.toUpperCase()}</span>
+            <span className="t">{tSec}s</span>
           </div>
-          {error && <p className="muted">Error: {error}</p>}
+        </div>
 
-          {!plant ? (
-            <p className="muted">Loading plant…</p>
-          ) : (
-            <svg
-              className="twin"
-              viewBox={`0 0 ${plant.width} ${plant.height}`}
-              role="img"
-              aria-label={plant.name}
-            >
-              <rect width={plant.width} height={plant.height} fill="#0a100e" />
-              {plant.zones.map((z) => {
-                const points = z.polygon.map((p) => p.join(",")).join(" ");
-                const cx = z.polygon.reduce((s, p) => s + p[0], 0) / z.polygon.length;
-                const cy = z.polygon.reduce((s, p) => s + p[1], 0) / z.polygon.length;
-                return (
-                  <g key={z.id}>
-                    <polygon
-                      points={points}
-                      fill={zoneFill(z.id, critical?.zone_id, zonesTint, gasZones)}
-                      stroke={
-                        z.id === critical?.zone_id
-                          ? "rgba(255,90,79,0.95)"
-                          : "rgba(232,240,235,0.25)"
-                      }
-                      strokeWidth="2"
-                    />
-                    <text className="zone-label" x={cx} y={cy} textAnchor="middle">
-                      {z.name}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          )}
-        </section>
+        <div className="legend">
+          <span><i className="c-ok" /> Clear</span>
+          <span><i className="c-warn" /> Elevated</span>
+          <span><i className="c-crit" /> Critical</span>
+        </div>
 
-        <aside className="panel">
-          <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Assessment</h2>
-          {assessments.length === 0 && (
-            <p className="muted">Play a scenario — watch risk form as ticks stream in.</p>
+        {critical && (
+          <div className="hot-chip">
+            <span>Hot zone</span>
+            <strong>{zoneTitle(critical.zone_id)}</strong>
+            <em>{critical.severity}</em>
+          </div>
+        )}
+      </div>
+
+      <aside className="panel">
+        <header>
+          <h1>Assessment</h1>
+          <p>Compound risk vs single-sensor baseline</p>
+        </header>
+
+        {metrics && (
+          <div className="metrics">
+            <div>
+              <small>Fusion first</small>
+              <b>@{metrics.fusion_first_critical_sec ?? "—"}s</b>
+            </div>
+            <div>
+              <small>Baseline</small>
+              <b>@{metrics.baseline_first_fire_sec ?? "—"}s</b>
+            </div>
+            <div>
+              <small>Lead time</small>
+              <b className="lead">{metrics.lead_time_sec ?? "—"}s</b>
+            </div>
+          </div>
+        )}
+
+        <div className="feed">
+          {assessments.length === 0 && !decision && (
+            <p className="empty">
+              Select a scenario and run it. Zones on the twin tint as fused risk rises —
+              then act from this panel.
+            </p>
           )}
-          {assessments.map((a, i) => (
-            <article key={`${a.id || a.title}-${i}`} className={`card ${a.severity}`}>
-              <div className="sev">{a.severity}</div>
-              <strong>{a.title}</strong>
-              <div className="meta">
-                <span>t={a.t_sec}s</span>
-                <span>{a.recommended_action?.replaceAll("_", " ")}</span>
-                {a.model_score != null && (
-                  <span>model {(a.model_score * 100).toFixed(0)}%</span>
-                )}
-                {a.rule_forced && <span>rule guard</span>}
-                {a.baseline_miss && <span>beats baseline</span>}
+
+          {assessments.map((a) => (
+            <article key={a.id || a.title} className={`card ${a.severity}`}>
+              <div className="card-head">
+                <h2>{a.title}</h2>
+                <span className="score">
+                  {a.model_score != null ? `${(a.model_score * 100).toFixed(0)}%` : "—"}
+                </span>
               </div>
               <ul>
-                {a.factors?.map((f) => (
+                {a.factors?.slice(0, 3).map((f) => (
                   <li key={f.code}>{f.label}</li>
                 ))}
               </ul>
-              {a.citations?.length > 0 && (
-                <div className="cites">
-                  {a.citations.map((c) => (
-                    <blockquote key={c.code}>
-                      <strong>{c.source}</strong>
-                      <span>{c.excerpt}</span>
-                    </blockquote>
-                  ))}
-                </div>
+              {a.citations?.[0] && (
+                <p className="cite">{a.citations[0].source}</p>
               )}
-
               {a.id && (
-                <div className="row" style={{ marginTop: "0.65rem", marginBottom: 0 }}>
-                  <button
-                    className="danger"
-                    type="button"
-                    disabled={deciding || decision?.assessment_id === a.id}
-                    onClick={() => onDecide(a)}
-                  >
-                    {decision?.assessment_id === a.id
-                      ? "Decision executed"
-                      : actionLabel(a.recommended_action)}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="btn-act"
+                  disabled={deciding || decision?.assessment_id === a.id}
+                  onClick={() => onDecide(a)}
+                >
+                  {decision?.assessment_id === a.id ? "Executed" : actionLabel(a.recommended_action)}
+                </button>
               )}
             </article>
           ))}
 
-          <h2 style={{ marginTop: "1.25rem", fontSize: "1rem" }}>Decision</h2>
-          {!decision && <p className="muted">Execute the recommended action from an assessment.</p>}
           {decision && (
             <article className="card ok">
-              <div className="sev ok-sev">{decision.state}</div>
-              <strong>{decision.message}</strong>
-              <div className="meta">
-                <span>{decision.action.replaceAll("_", " ")}</span>
-                {decision.blocked_permit_ids?.length > 0 && (
-                  <span>permits: {decision.blocked_permit_ids.join(", ")}</span>
-                )}
+              <div className="card-head">
+                <h2>{decision.message}</h2>
+                <span className="score">OK</span>
               </div>
             </article>
           )}
-        </aside>
-      </div>
+        </div>
+
+        {error && <p className="error">{error}</p>}
+      </aside>
     </div>
   );
 }
