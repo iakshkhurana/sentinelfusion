@@ -170,7 +170,7 @@ Returns `{ "score", "severity", "factor_hints": [] }` — production path is via
 
 ## Auth
 
-Hackathon v1: no auth (local/demo). If added later, Bearer token; document in a new ADR.
+v1: no auth (local/demo). If added later, Bearer token; document in a new ADR.
 
 ## OpenAPI
 

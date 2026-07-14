@@ -10,9 +10,9 @@ Format: date · decision · status · why · alternatives rejected.
 
 - **Date:** 2026-07-14  
 - **Status:** Accepted  
-- **Decision:** Build Problem 1 as **SentinelFusion**: compound risk fusion + digital permit intelligence + geospatial plant UI + RAG citations + eval vs single-sensor baseline.  
-- **Why:** Highest uniqueness + judge alignment; not another SOP chatbot.  
-- **Rejected:** Problem 8 as hero (commodity RAG); making RAG/chat the primary demo.
+- **Decision:** Build **SentinelFusion**: compound risk fusion + digital permit intelligence + geospatial plant UI + RAG citations + eval vs single-sensor baseline.  
+- **Why:** Highest uniqueness for industrial safety impact; not another SOP chatbot.  
+- **Rejected:** Document-only knowledge copilots as the hero; making RAG/chat the primary demo.
 
 ---
 
@@ -22,7 +22,7 @@ Format: date · decision · status · why · alternatives rejected.
 - **Status:** Accepted  
 - **Decision:** `apps/api`, `apps/web`, `apps/ml`, `packages/scenarios`, `docs`.  
 - **Why:** Clear ownership; ML artifacts and scenarios versioned with the product.  
-- **Rejected:** Single tangled package; separate repos for hackathon.
+- **Rejected:** Single tangled package; unnecessary multi-repo split for this stage.
 
 ---
 
@@ -81,7 +81,7 @@ Format: date · decision · status · why · alternatives rejected.
 - **Date:** 2026-07-14  
 - **Status:** Accepted  
 - **Decision:** Engineered features → ML risk model; hard rules can force CRITICAL and cannot be downgraded by ML.  
-- **Why:** Judges want AI/ML; safety demos need deterministic lethal-combo guarantees.  
+- **Why:** Strong AI/ML story for stakeholders; safety demos need deterministic lethal-combo guarantees.  
 - **Rejected:** Rules-only (under-sells AI); pure black-box ML without explanations/guardrails.
 
 ---
@@ -140,7 +140,7 @@ Format: date · decision · status · why · alternatives rejected.
 - **Date:** 2026-07-14  
 - **Status:** Accepted  
 - **Decision:** Pipeline modules: **Context Engine** → **Derived Facts** → **Assessment Pipeline** (rules + ML) → **Decision State Machine** (`assessing → recommended → awaiting_decision → confirmed|dismissed → executing → done`).  
-- **Why:** Watchable, testable architecture with clear UI mapping (Assessment panel + Decision flow). Inspired by strong twin/assessment builds; named for safety ops, not copied.  
+- **Why:** Watchable, testable architecture with clear UI mapping (Assessment panel + Decision flow).  
 - **Rejected:** Single mega-function “fusion()”; chatbot-as-orchestrator.
 
 ---
@@ -160,7 +160,7 @@ Format: date · decision · status · why · alternatives rejected.
 - **Date:** 2026-07-14  
 - **Status:** Accepted  
 - **Decision:** App opens on Digital Twin in Demo Mode with Assessment panel + Decision flow as primary chrome.  
-- **Why:** Instant judge dopamine; product story is spatial and operational.  
+- **Why:** Instant demo impact; product story is spatial and operational.  
 - **Rejected:** Settings-first / empty dashboard / chat-first landing.
 
 ---

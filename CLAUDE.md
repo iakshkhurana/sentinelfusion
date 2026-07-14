@@ -1,6 +1,6 @@
 # SentinelFusion — Claude / agent guide
 
-This repo is **ET AI Hackathon 2026 Problem 1**: AI industrial safety intelligence.
+This repo is **SentinelFusion**: AI industrial safety intelligence for zero-harm plant operations.
 
 **Product hero:** Digital Twin demo → derived facts → compound **assessment** → **decision** (e.g. block permit) → RAG cites → lead time / FN vs single-sensor baseline.  
 **Not the hero:** chat-over-SOPs alone.

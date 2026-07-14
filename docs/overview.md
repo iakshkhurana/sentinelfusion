@@ -1,7 +1,6 @@
 # Overview — SentinelFusion
 
-**Hackathon problem:** AI-Powered Industrial Safety Intelligence for Zero-Harm Operations  
-**Theme:** Industrial Intelligence / Worker Safety / Geospatial Safety Analytics
+**Domain:** Industrial Intelligence · Worker Safety · Geospatial Safety Analytics
 
 Stack vibe sheet: [`docs/stack.md`](stack.md)
 
@@ -47,7 +46,7 @@ Heavy industry has sensors and permits. Fatal patterns are **combinations**. Viz
 2. Gas rises; hot work requested nearby.  
 3. Baseline quiet / late.  
 4. Assessment CRITICAL → decision **block permit** → cites → metrics.  
-5. Judges see the map turn red *before* the incident clock.
+5. The map turns red *before* the incident clock.
 
 ## Success metrics
 

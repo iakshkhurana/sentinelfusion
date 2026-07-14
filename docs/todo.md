@@ -62,7 +62,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [ ] Healthchecks, `.env.example`, seed command  
 - [ ] Seed script: scenarios + model artifact + corpus  
 
-## Phase 7 — Hackathon package
+## Phase 7 — Demo package
 
 - [ ] Architecture diagram (matches running system)  
 - [ ] Deck: problem → unique wedge → demo → metrics → scale  
@@ -77,4 +77,4 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 ## Definition of done
 
-Stranger runs Compose → plays scenario → baseline late → fusion CRITICAL early → permit blocked → cites + metrics → judges nod. That is the bar.
+Stranger runs Compose → plays scenario → baseline late → fusion CRITICAL early → permit blocked → cites + metrics. That is the bar.

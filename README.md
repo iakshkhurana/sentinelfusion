@@ -122,20 +122,13 @@ Aligned with industrial safety outcomes that matter in the field:
 
 ## Status
 
-**Design freeze in progress** — product docs, contracts, and architecture decision records are in place. Implementation follows [`docs/todo.md`](docs/todo.md).
-
----
-
-## Hackathon
-
-Built for **ET AI Hackathon 2026** — Problem Statement 1:  
-*AI-Powered Industrial Safety Intelligence for Zero-Harm Operations.*
+**Design in progress** — product docs, contracts, and architecture decision records are in place. Implementation follows [`docs/todo.md`](docs/todo.md).
 
 ---
 
 ## License
 
-Proprietary for the duration of the hackathon unless otherwise stated by the team.
+Proprietary — all rights reserved unless otherwise stated by the team.
 
 ---
 

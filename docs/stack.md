@@ -1,6 +1,6 @@
-# Stack — SentinelFusion (the fun version)
+# Stack — SentinelFusion
 
-Idea stolen energetically from a strong twin/assessment build — **not copied**. Our wedge stays: **compound risk + permit intelligence + measurable lead time**.
+Wedge: **compound risk + permit intelligence + measurable lead time** — engineered so the demo feels alive.
 
 ## At a glance
 
@@ -9,7 +9,7 @@ Idea stolen energetically from a strong twin/assessment build — **not copied**
 | **Backend** | FastAPI + PostgreSQL (+ pgvector) | Serious industrial backend energy |
 | **Brain** | Context engine → derived facts → assessment pipeline → decision state machine | Not a pile of ifs; a story you can watch |
 | **Frontend** | React bootstraps on **Digital Twin · Demo Mode** | Opens on the plant, not a login void |
-| **Panels** | Assessment panel + Decision flow | Judge sees *why* then *what to do* |
+| **Panels** | Assessment panel + Decision flow | Viewer sees *why* then *what to do* |
 | **Simulator** | **YAML** scenario files replay fake plant events | Gas leak, permit conflict, compound risk — editable, cinematic |
 | **AI** | Mock provider in dev · OpenAI-compatible / Ollama in demo | Structured output, **one retry**, then **fail visibly** |
 | **Realtime** | **WebSocket** broadcast bus | Twin + UI pulse together |
@@ -105,12 +105,6 @@ Broadcast envelopes:
 - `ai.error` — visible failure after retry  
 
 REST still owns commands (run control, confirm decision). WS is the live nervous system.
-
-## What we deliberately did *not* copy blindly
-
-- Their exact naming / product shell  
-- Review-only metaphor → we use **Assessment + Decision** (safety ops language)  
-- SSE-only (we want twin bidirectionality + shared fanout → WebSocket)  
 
 ## Locked choices pointer
 

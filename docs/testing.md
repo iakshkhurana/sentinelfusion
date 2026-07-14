@@ -52,7 +52,7 @@ Minimum gate before demo: **all P0 scenarios pass** this harness.
 - [ ] Manual smoke path noted in PR/commit message if UI  
 - [ ] No secrets committed  
 
-## Definition of done (hackathon vertical slice)
+## Definition of done (end-to-end vertical slice)
 
 - [ ] `docker compose up` brings API + web + DB  
 - [ ] ≥3 scenarios pass eval harness  

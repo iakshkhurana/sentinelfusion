@@ -10,10 +10,10 @@ Data is siloed across SCADA, PTW, maintenance, and shift logs. Fatal conditions 
 
 ## Goals
 
-1. Best-in-class **compound risk** demo for ET AI Hackathon 2026 (Problem 1).  
+1. Best-in-class **compound risk** product demo for industrial safety officers.  
 2. Showcase **AI + ML + RAG + multi-agent + geo UX** without losing a sharp product story.  
 3. Beat single-sensor baselines on lead time and false negatives on our scenario suite.  
-4. Make judges feel “this could ship to a plant safety team.”
+4. Make a first-time viewer feel “this could ship to a plant safety team.”
 
 ## Non-goals (v1 still)
 
@@ -29,7 +29,7 @@ Data is siloed across SCADA, PTW, maintenance, and shift logs. Fatal conditions 
 | Safety officer | Sees compounding risk early, trusts explanation |
 | Permit coordinator | Unsafe permit never quietly approved |
 | HSE / auditor | Evidence pack + citations |
-| Judge | Understands unique value in under 2 minutes |
+| First-time viewer | Understands unique value in under 2 minutes |
 
 ## Unique value prop
 
@@ -87,12 +87,12 @@ App launches on **Digital Twin · Demo Mode** with Assessment panel + Decision f
 - [ ] Geo map + metrics + action path in one flow  
 - [ ] `docker compose up` boots the demo  
 
-## Judging alignment
+## Success alignment
 
 | Criterion | How we score |
 |-----------|--------------|
-| Innovation 25% | Compound fusion + permit intelligence (not SOP chat) |
-| Business impact 25% | Lives + downtime + auditability narrative |
-| Technical excellence 20% | ML + agents + RAG + realtime geo + eval |
-| Scalability 15% | Multi-zone plant pack / scenario packs / Compose |
-| UX 15% | Map-first operational UI |
+| Innovation | Compound fusion + permit intelligence (not SOP chat) |
+| Business impact | Lives + downtime + auditability narrative |
+| Technical excellence | ML + assessment pipeline + RAG + realtime geo + eval |
+| Scalability | Multi-zone plant pack / scenario packs / Compose |
+| UX | Map-first operational UI |
