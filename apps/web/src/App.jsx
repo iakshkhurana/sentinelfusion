@@ -131,6 +131,16 @@ export default function App() {
     ws.send(JSON.stringify({ type: "control", command }));
   }
 
+  function onSkipAhead() {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const sc = scenarios.find((s) => s.id === scenarioId);
+    const incident = sc?.incident_at_sec ?? 480;
+    // land ~3 minutes before ground-truth incident so fusion still plays live
+    const atSec = Math.max(0, incident - 200);
+    ws.send(JSON.stringify({ type: "control", command: "scrub", at_sec: atSec }));
+  }
+
   async function onAsk(e) {
     e?.preventDefault?.();
     setAsking(true);
@@ -211,10 +221,15 @@ export default function App() {
             <button type="button" className="btn-primary" onClick={onPlay} disabled={status === "running"}>
               {status === "running" ? "Running…" : "Run scenario"}
             </button>
-            {(status === "running") && (
-              <button type="button" className="btn-ghost" onClick={onPauseToggle}>
-                {paused ? "Resume" : "Pause"}
-              </button>
+            {status === "running" && (
+              <>
+                <button type="button" className="btn-ghost" onClick={onPauseToggle}>
+                  {paused ? "Resume" : "Pause"}
+                </button>
+                <button type="button" className="btn-ghost" onClick={onSkipAhead} disabled={paused}>
+                  Skip ahead
+                </button>
+              </>
             )}
           </div>
 

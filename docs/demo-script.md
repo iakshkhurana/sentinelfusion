@@ -8,7 +8,7 @@ Record against `docker compose up --build` → http://localhost:5173
 |------|----------|
 | 0–15s | **Problem:** sensors stay green while co-occurring gas + hot work write the incident. Single-tag alarms miss combinations. |
 | 15–25s | Open twin. “Coastal Integrated Steel — seven zones labeled on the plant.” |
-| 25–45s | Select **Hot work beside rising CO** → **Run scenario**. Narrate ticks lighting zones. |
+| 25–45s | Select **Hot work beside rising CO** → **Run** (or **Skip ahead** then watch compound fire). |
 | 45–70s | CRITICAL: hit **Pause**. Point Hot zone + PTW + vision + race (Fusion before Baseline). **Resume**. |
 | 70–95s | When baseline finally fires, call **“Fusion led by Ns”**. Now-step + **Block permit**. |
 | 95–120s | Optional: **HSE ask** “hot work near gas” → citation. Close: Compose + eval harness green on all three. |

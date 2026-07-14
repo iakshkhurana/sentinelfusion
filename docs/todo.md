@@ -25,7 +25,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] YAML simulator (trends + permit lifecycle in scenarios)  
 - [x] WebSocket twin ticks  
 - [x] Single-sensor baseline alerter  
-- [x] Scenario pause / resume over WebSocket (scrub later)  
+- [x] Scenario pause / resume / scrub over WebSocket  
 
 ## Phase 2 — ML + fusion (core uniqueness)
 

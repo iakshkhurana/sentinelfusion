@@ -149,7 +149,7 @@ async def ws_scenario(scenario_id: str, websocket: WebSocket) -> None:
         return
     await websocket.accept()
     data = _load_yaml(path)
-    state = {"paused": False}
+    state: dict = {"paused": False, "scrub_to": None}
 
     async def listen_control() -> None:
         try:
@@ -168,6 +168,18 @@ async def ws_scenario(scenario_id: str, websocket: WebSocket) -> None:
                     await websocket.send_json(
                         {"type": "run.control", "payload": {"status": "running"}}
                     )
+                elif cmd == "scrub":
+                    at = raw.get("at_sec")
+                    if at is None:
+                        continue
+                    state["scrub_to"] = float(at)
+                    state["paused"] = False
+                    await websocket.send_json(
+                        {
+                            "type": "run.control",
+                            "payload": {"status": "running", "scrub_to": state["scrub_to"]},
+                        }
+                    )
         except WebSocketDisconnect:
             return
 
@@ -180,8 +192,18 @@ async def ws_scenario(scenario_id: str, websocket: WebSocket) -> None:
                 _remember([msg["payload"]])
             elif msg["type"] == "run.done":
                 _remember(msg["payload"].get("assessments") or [])
+
+            t = msg.get("payload", {}).get("t_sec") if isinstance(msg.get("payload"), dict) else None
+            scrub_to = state["scrub_to"]
+            skipping = scrub_to is not None and t is not None and float(t) < scrub_to
+            if skipping and msg["type"] == "twin.tick":
+                continue
+
+            if scrub_to is not None and t is not None and float(t) >= scrub_to:
+                state["scrub_to"] = None
+
             await websocket.send_json(msg)
-            if msg["type"] != "run.done":
+            if msg["type"] != "run.done" and not skipping:
                 await asyncio.sleep(_TICK_PAUSE_SEC)
     except WebSocketDisconnect:
         return

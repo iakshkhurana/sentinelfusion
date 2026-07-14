@@ -80,12 +80,12 @@ App launches on **Digital Twin · Demo Mode** with Assessment panel + Decision f
 
 ## Acceptance criteria
 
-- [ ] ≥3 labeled scenarios; fusion beats baseline on each for lead time or catch  
-- [ ] ML scorer + rule guardrails both visible in architecture  
-- [ ] Agents have clear inputs/outputs (not fake labels on one function)  
-- [ ] RAG cites on every CRITICAL alert  
-- [ ] Geo map + metrics + action path in one flow  
-- [ ] `docker compose up` boots the demo  
+- [x] ≥3 labeled scenarios; fusion beats baseline on each for lead time or catch  
+- [x] ML scorer + rule guardrails both visible in architecture  
+- [x] Agents have clear inputs/outputs (not fake labels on one function)  
+- [x] RAG cites on every CRITICAL alert  
+- [x] Geo map + metrics + action path in one flow  
+- [x] `docker compose up` boots the demo  
 
 ## Success alignment
 
