@@ -141,6 +141,7 @@ export default function App() {
             plant={plant}
             zonesTint={zonesTint}
             criticalZoneId={critical?.zone_id}
+            gasZoneIds={critical?.gas_zone_ids || []}
           />
         ) : (
           <div className="loading">Loading plant layout…</div>
@@ -296,6 +297,12 @@ export default function App() {
                       </span>
                     ))}
                   </div>
+                )}
+                {a.ai?.summary && (
+                  <p className="ai-brief">
+                    <span>{a.ai.provider}</span>
+                    {a.ai.summary}
+                  </p>
                 )}
                 <ul>
                   {a.factors?.slice(0, 3).map((f) => (

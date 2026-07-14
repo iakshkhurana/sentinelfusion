@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 
 from agents import ops, permit, sensor
+from ai import brief
 from cites import citations_for
 from features_bridge import extract_features, vectorize
 from scorer import score_features
@@ -108,6 +109,7 @@ def fuse(
         gas_zone_ids = list(sensor_r["gas_zones"])
 
     factor_codes = [f["code"] for f in factors]
+    ai = brief(title=title, action=action, factors=factors, rule_forced=rule_forced)
     return {
         "id": str(uuid.uuid4()),
         "t_sec": t,
@@ -130,4 +132,5 @@ def fuse(
             {"agent": a["agent"], "facts": a["facts"]}
             for a in agents
         ],
+        "ai": ai,
     }

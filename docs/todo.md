@@ -5,36 +5,34 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 ## Phase 0 — Foundations
 
 - [x] Agent docs + stack vibe (`docs/stack.md`) + ADRs 012–016 (WS, YAML, pipeline, AI provider, twin boot)  
-- [ ] Monorepo: `apps/api`, `apps/web`, `apps/ml`, `packages/scenarios`, `docs`  
-- [ ] Canonical schemas + zone adjacency graph (from `docs/data-model.md`)  
-- [ ] SVG plant layout (6+ zones)  
-- [ ] ≥3 YAML scenarios with ground-truth `incident_at_sec`  
+- [x] Monorepo: `apps/api`, `apps/web`, `apps/ml`, `packages/`  
+- [x] Plant pack + zone adjacency (steel_pack_v1)  
+- [x] Three.js plant twin (6+ zones)  
+- [x] ≥3 YAML scenarios with ground-truth `incident_at_sec`  
 - [x] Pytest scenario eval harness (all packaged YAMLs) + health/run smoke  
 - [ ] Vitest + WS test helper (web)  
 
 ## Phase 0b — Brain spine stubs
 
-- [ ] Context engine + derived facts modules  
-- [ ] Assessment pipeline + baseline path  
-- [ ] Decision state machine  
-- [ ] AI provider interface (`mock` default)  
-- [ ] WebSocket hub fanout  
-
+- [x] Context / features via agents + feature extractors  
+- [x] Assessment pipeline + baseline path  
+- [x] Decision state machine  
+- [x] AI provider interface (`mock` default)  
+- [x] WebSocket scenario fanout  
 
 ## Phase 1 — Twin + baseline
 
-- [ ] High-quality simulator (noise, trends, permit lifecycle)  
-- [ ] Event bus + WebSocket/SSE  
-- [ ] Single-sensor baseline alerter  
-- [ ] Scenario play / pause / scrub API  
+- [x] YAML simulator (trends + permit lifecycle in scenarios)  
+- [x] WebSocket twin ticks  
+- [x] Single-sensor baseline alerter  
+- [ ] Scenario pause / scrub API  
 
 ## Phase 2 — ML + fusion (core uniqueness)
 
-- [ ] Feature engineering (levels, slopes, proximity, permit one-hots, shift flags)  
-- [ ] Train compound risk classifier on synthetic labels  
-- [ ] Rule guardrails for known-lethal combos  
-- [ ] Factor contribution / explanation payload  
-- [ ] Metrics: lead time, FN, precision vs baseline  
+- [x] Feature engineering + compound classifier artifact  
+- [x] Rule guardrails for known-lethal combos  
+- [x] Factor + agent explanation payload  
+- [x] Metrics: lead time / FN vs baseline  
 
 ## Phase 3 — Agents + orchestrator
 
@@ -45,11 +43,11 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 ## Phase 4 — Frontend product
 
-- [x] Plant twin zone labels + risk tint + live PTW strip  
+- [x] Plant twin zone labels + risk tint + live PTW strip + adjacency arcs  
 - [x] Factor evidence + “what to do now” on critical cards  
 - [x] Baseline vs fusion comparison strip (proof line + metrics)  
 - [x] Live fusion-vs-baseline race strip (baseline.fire on twin)  
-- [ ] Extra demo polish (loading microcopy / motion)  
+- [x] Demo polish: AI mock brief + adjacency arcs (+ race/PTW)  
 
 ## Phase 5 — RAG (full, attached to actions)
 

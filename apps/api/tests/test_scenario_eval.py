@@ -34,6 +34,8 @@ def test_fusion_beats_baseline_before_incident(path: Path) -> None:
     assert crit.get("citations"), f"{path.stem}: missing citations"
     assert all(c.get("next_step") for c in crit["citations"]), f"{path.stem}: citation missing next_step"
     assert {a["agent"] for a in crit.get("agents") or []} == {"sensor", "permit", "ops"}
+    assert crit.get("ai", {}).get("ok") is True
+    assert crit["ai"].get("summary")
 
 
 def test_knowledge_corpus_loaded() -> None:

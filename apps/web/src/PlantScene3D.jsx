@@ -17,7 +17,7 @@ function shortLabel(name) {
 }
 
 /** Formal isometric plant twin — readable zones, no room fluff. */
-export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
+export default function PlantScene3D({ plant, zonesTint, criticalZoneId, gasZoneIds }) {
   const mountRef = useRef(null);
   const apiRef = useRef(null);
 
@@ -172,6 +172,43 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
     pulse.position.set(0, 3, 0);
     root.add(pulse);
 
+    const linkGroup = new THREE.Group();
+    root.add(linkGroup);
+
+    function clearLinks() {
+      while (linkGroup.children.length) {
+        const obj = linkGroup.children[0];
+        linkGroup.remove(obj);
+        obj.geometry?.dispose();
+        obj.material?.dispose();
+      }
+    }
+
+    function drawLinks(critId, gasIds) {
+      clearLinks();
+      if (!critId) return;
+      const from = zoneMeshes.get(critId);
+      if (!from) return;
+      const targets = (gasIds || []).filter((id) => id && id !== critId);
+      for (const gid of targets) {
+        const to = zoneMeshes.get(gid);
+        if (!to) continue;
+        const a = new THREE.Vector3(from.body.position.x, from.bh + 0.5, from.body.position.z);
+        const b = new THREE.Vector3(to.body.position.x, to.bh + 0.5, to.body.position.z);
+        const mid = a.clone().lerp(b, 0.5);
+        mid.y += 0.7;
+        const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+        const pts = curve.getPoints(16);
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.LineBasicMaterial({
+          color: 0xff6b5a,
+          transparent: true,
+          opacity: 0.9,
+        });
+        linkGroup.add(new THREE.Line(geo, mat));
+      }
+    }
+
     const focus = new THREE.Vector3(0, 0.6, 0);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -224,12 +261,13 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
     window.addEventListener("resize", onResize);
 
     apiRef.current = {
-      update(tint, critId) {
+      update(tint, critId, gasIds) {
         for (const [id, z] of zoneMeshes) {
           const level = tint?.[id] ?? 0;
           const critical = id === critId;
+          const linked = !critical && (gasIds || []).includes(id);
           z.labelEl.classList.toggle("hot", critical);
-          z.labelEl.classList.toggle("warn", !critical && level > 0.12);
+          z.labelEl.classList.toggle("warn", !critical && (level > 0.12 || linked));
           if (critical) {
             z.mat.color.setHex(0x5a3030);
             z.mat.emissive.set("#ff5d4a");
@@ -241,10 +279,10 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
             pulse.position.set(z.body.position.x, z.bh + 1, z.body.position.z);
             gsap.to(pulse, { intensity: 2.2, duration: 0.35 });
             gsap.fromTo(z.body.scale, { y: 1 }, { y: 1.12, duration: 0.3, yoyo: true, repeat: 3 });
-          } else if (level > 0.12) {
+          } else if (level > 0.12 || linked) {
             z.mat.color.setHex(0x4a4030);
             z.mat.emissive.set("#f0b429");
-            z.mat.emissiveIntensity = 0.2 + level * 0.45;
+            z.mat.emissiveIntensity = linked ? 0.45 : 0.2 + level * 0.45;
             z.edge.material.emissive.set("#f0b429");
             z.edge.material.emissiveIntensity = 0.7;
             z.marker.material.emissiveIntensity = 1.1;
@@ -257,6 +295,7 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
             z.marker.material.emissiveIntensity = 0.6;
           }
         }
+        drawLinks(critId, gasIds);
         if (!critId) gsap.to(pulse, { intensity: 0, duration: 0.35 });
       },
     };
@@ -264,6 +303,7 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      clearLinks();
       controls.dispose();
       renderer.dispose();
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
@@ -273,8 +313,8 @@ export default function PlantScene3D({ plant, zonesTint, criticalZoneId }) {
   }, [plant]);
 
   useEffect(() => {
-    apiRef.current?.update(zonesTint || {}, criticalZoneId);
-  }, [zonesTint, criticalZoneId]);
+    apiRef.current?.update(zonesTint || {}, criticalZoneId, gasZoneIds || []);
+  }, [zonesTint, criticalZoneId, gasZoneIds]);
 
   return <div className="scene3d" ref={mountRef} />;
 }
