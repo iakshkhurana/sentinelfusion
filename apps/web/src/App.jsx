@@ -41,6 +41,7 @@ export default function App() {
   const [metrics, setMetrics] = useState(null);
   const [zonesTint, setZonesTint] = useState({});
   const [permits, setPermits] = useState([]);
+  const [baselineFire, setBaselineFire] = useState(null);
   const [tSec, setTSec] = useState(0);
   const [status, setStatus] = useState("idle");
   const [decision, setDecision] = useState(null);
@@ -71,6 +72,7 @@ export default function App() {
     setDecision(null);
     setZonesTint({});
     setPermits([]);
+    setBaselineFire(null);
     setTSec(0);
     setStatus("running");
     wsRef.current?.close();
@@ -87,6 +89,9 @@ export default function App() {
       }
       if (msg.type === "assessment.upsert") {
         setAssessments((prev) => [msg.payload, ...prev]);
+      }
+      if (msg.type === "baseline.fire") {
+        setBaselineFire(msg.payload);
       }
       if (msg.type === "run.done") {
         setAssessments(msg.payload.assessments || []);
@@ -191,6 +196,30 @@ export default function App() {
             <span>Hot zone</span>
             <strong>{zoneTitle(critical.zone_id)}</strong>
             <em>{critical.severity}</em>
+          </div>
+        )}
+
+        {(critical || baselineFire) && (
+          <div className="race">
+            <div className={`race-lane ${critical ? "on" : ""}`}>
+              <span>Fusion</span>
+              <strong>{critical ? `CRITICAL @${critical.t_sec}s` : "watching…"}</strong>
+            </div>
+            <div className={`race-lane baseline ${baselineFire ? "on late" : ""}`}>
+              <span>Baseline</span>
+              <strong>
+                {baselineFire
+                  ? `sensor fire @${baselineFire.t_sec}s`
+                  : critical
+                    ? "still silent"
+                    : "watching…"}
+              </strong>
+            </div>
+            {critical && baselineFire && baselineFire.t_sec > critical.t_sec && (
+              <p className="race-win">
+                Fusion led by {baselineFire.t_sec - critical.t_sec}s
+              </p>
+            )}
           </div>
         )}
       </div>

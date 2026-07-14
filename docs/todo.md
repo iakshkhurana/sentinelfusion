@@ -48,7 +48,8 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] Plant twin zone labels + risk tint + live PTW strip  
 - [x] Factor evidence + “what to do now” on critical cards  
 - [x] Baseline vs fusion comparison strip (proof line + metrics)  
-- [ ] Demo mode polish (brand, motion, empty/loading states)  
+- [x] Live fusion-vs-baseline race strip (baseline.fire on twin)  
+- [ ] Extra demo polish (loading microcopy / motion)  
 
 ## Phase 5 — RAG (full, attached to actions)
 
@@ -68,7 +69,7 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 
 - [x] Architecture diagram (matches running system)  
 - [x] 90–120s demo script (`docs/demo-script.md`)  
-- [ ] Deck slides (problem → wedge → demo → metrics → scale)  
+- [x] Deck outline (`docs/deck.md` → paste into Gamma/PPT)  
 - [ ] Recorded 90–120s demo video  
 - [x] README one-command path  
 

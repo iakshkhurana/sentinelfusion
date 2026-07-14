@@ -90,6 +90,7 @@ docs/           # Product, architecture, contracts, ADRs
 | [`docs/stack.md`](docs/stack.md) | Engineering shape |
 | [`docs/architecture.md`](docs/architecture.md) | System design |
 | [`docs/demo-script.md`](docs/demo-script.md) | 90–120s demo narration |
+| [`docs/deck.md`](docs/deck.md) | Pitch deck outline |
 | [`docs/prd.md`](docs/prd.md) | Requirements |
 | [`docs/api.md`](docs/api.md) | API contracts |
 | [`docs/data-model.md`](docs/data-model.md) | Canonical types |

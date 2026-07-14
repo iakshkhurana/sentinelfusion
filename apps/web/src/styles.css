@@ -340,6 +340,65 @@ body,
   color: var(--red);
 }
 
+.race {
+  position: absolute;
+  left: 1rem;
+  bottom: 3.4rem;
+  z-index: 3;
+  min-width: 14rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.7rem;
+  background: rgba(12, 16, 22, 0.86);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+  display: grid;
+  gap: 0.4rem;
+}
+
+.race-lane {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+  opacity: 0.45;
+}
+
+.race-lane.on {
+  opacity: 1;
+}
+
+.race-lane span {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.race-lane strong {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--teal-bright);
+}
+
+.race-lane.baseline.on strong {
+  color: var(--amber);
+}
+
+.race-lane.late strong {
+  color: #f0c070;
+}
+
+.race-win {
+  margin: 0.15rem 0 0;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--teal-bright);
+}
+
 .panel {
   display: flex;
   flex-direction: column;
