@@ -1,0 +1,77 @@
+{
+  "plant_id": "steel_pack_v1",
+  "name": "Coastal Integrated Steel",
+  "width": 1000,
+  "height": 640,
+  "zones": [
+    {
+      "id": "zone_coke_oven",
+      "name": "Coke Oven Battery",
+      "hazard_class": "critical",
+      "polygon": [[40, 60], [320, 60], [320, 280], [40, 280]],
+      "adjacent_zone_ids": ["zone_byproduct", "zone_gas_holder", "zone_maintenance_bay"]
+    },
+    {
+      "id": "zone_byproduct",
+      "name": "By-Product Plant",
+      "hazard_class": "high",
+      "polygon": [[340, 60], [620, 60], [620, 280], [340, 280]],
+      "adjacent_zone_ids": ["zone_coke_oven", "zone_gas_holder", "zone_pipe_rack"]
+    },
+    {
+      "id": "zone_gas_holder",
+      "name": "Gas Holder / Header",
+      "hazard_class": "critical",
+      "polygon": [[40, 300], [320, 300], [320, 520], [40, 520]],
+      "adjacent_zone_ids": ["zone_coke_oven", "zone_byproduct", "zone_blast_furnace"]
+    },
+    {
+      "id": "zone_blast_furnace",
+      "name": "Blast Furnace Area",
+      "hazard_class": "high",
+      "polygon": [[340, 300], [620, 300], [620, 520], [340, 520]],
+      "adjacent_zone_ids": ["zone_gas_holder", "zone_pipe_rack", "zone_control_room"]
+    },
+    {
+      "id": "zone_maintenance_bay",
+      "name": "Maintenance Bay",
+      "hazard_class": "medium",
+      "polygon": [[640, 60], [960, 60], [960, 280], [640, 280]],
+      "adjacent_zone_ids": ["zone_coke_oven", "zone_pipe_rack"]
+    },
+    {
+      "id": "zone_pipe_rack",
+      "name": "Pipe Rack Corridor",
+      "hazard_class": "high",
+      "polygon": [[640, 300], [960, 300], [960, 420], [640, 420]],
+      "adjacent_zone_ids": ["zone_byproduct", "zone_blast_furnace", "zone_maintenance_bay", "zone_control_room"]
+    },
+    {
+      "id": "zone_control_room",
+      "name": "Central Control Room",
+      "hazard_class": "low",
+      "polygon": [[640, 440], [960, 440], [960, 580], [640, 580]],
+      "adjacent_zone_ids": ["zone_blast_furnace", "zone_pipe_rack"]
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset_co_battery_3",
+      "zone_id": "zone_coke_oven",
+      "name": "Coke Oven Battery #3",
+      "asset_type": "coke_oven"
+    },
+    {
+      "id": "asset_gas_header_main",
+      "zone_id": "zone_gas_holder",
+      "name": "Main Coke Oven Gas Header",
+      "asset_type": "gas_header"
+    },
+    {
+      "id": "asset_confined_pit_b",
+      "zone_id": "zone_byproduct",
+      "name": "Tar Pit Access B",
+      "asset_type": "confined_space"
+    }
+  ]
+}
