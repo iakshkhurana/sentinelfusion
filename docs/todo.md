@@ -68,8 +68,9 @@ Order: foundation → fusion/ML → agents/UI → RAG → polish/devops → deck
 - [x] Architecture diagram (matches running system)  
 - [x] 90–120s demo script (`docs/demo-script.md`)  
 - [x] Deck outline (`docs/deck.md` → paste into Gamma/PPT)  
-- [ ] Recorded 90–120s demo video  
-- [x] README one-command path  
+- [ ] Recorded 90–120s demo video *(human — see `docs/submit-checklist.md`)*  
+- [x] README one-command path + proof table + eval report  
+- [x] Submit checklist (`docs/submit-checklist.md`)  
 
 ## Stretch (if crushing it)
 

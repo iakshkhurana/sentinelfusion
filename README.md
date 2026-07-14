@@ -91,6 +91,7 @@ docs/           # Product, architecture, contracts, ADRs
 | [`docs/architecture.md`](docs/architecture.md) | System design |
 | [`docs/demo-script.md`](docs/demo-script.md) | 90–120s demo narration |
 | [`docs/deck.md`](docs/deck.md) | Pitch deck outline |
+| [`docs/submit-checklist.md`](docs/submit-checklist.md) | Record + submit hand-off |
 | [`docs/prd.md`](docs/prd.md) | Requirements |
 | [`docs/api.md`](docs/api.md) | API contracts |
 | [`docs/data-model.md`](docs/data-model.md) | Canonical types |
@@ -135,7 +136,20 @@ pwsh scripts/verify.ps1
 
 # Unix
 bash scripts/verify.sh
+
+# Metrics table only
+python scripts/eval_report.py
 ```
+
+### Proof (packaged scenarios)
+
+| Scenario | Fusion | Baseline | Lead | Incident |
+|----------|--------|----------|------|----------|
+| `hot_work_gas_adjacent` | @300s | @420s | +180s | @480s |
+| `confined_space_abnormal` | @240s | @390s | +180s | @420s |
+| `maint_gas_path_trend` | @270s | @420s | +180s | @450s |
+
+Recompute anytime with `python scripts/eval_report.py`.
 
 ---
 
@@ -149,11 +163,13 @@ Aligned with industrial safety outcomes that matter in the field:
 - Geospatial evidence quality  
 - Regulatory citation relevance  
 
+Demo / submit hand-off: [`docs/submit-checklist.md`](docs/submit-checklist.md) · [`docs/demo-script.md`](docs/demo-script.md) · [`docs/deck.md`](docs/deck.md)
+
 ---
 
 ## Status
 
-**Runnable demo** — Compose boots API + twin UI; YAML scenarios stream over WebSocket; compound ML + rule guardrails; decision flow with citations and lead-time metrics. Roadmap leftovers: [`docs/todo.md`](docs/todo.md).
+**Demo-ready** — Compose boots API + twin; live WS with pause/scrub; agents + ML + citations; decision audit; HSE ask; eval harness green. Remaining human step: record the 90–120s video.
 
 ---
 

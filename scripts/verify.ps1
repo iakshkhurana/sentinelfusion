@@ -14,4 +14,7 @@ Write-Host "== pytest scenario eval =="
 Push-Location apps/api
 python -m pytest -q
 Pop-Location
+
+Write-Host "== eval report =="
+python scripts/eval_report.py
 Write-Host "verify ok"
